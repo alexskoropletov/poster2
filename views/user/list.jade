@@ -1,0 +1,10 @@
+extends ../layout
+block content
+  table.table
+    thead
+      tr
+        th= Логин
+    tbody
+      each val in users
+        tr
+          th= val.login

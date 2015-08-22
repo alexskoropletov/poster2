@@ -1,0 +1,41 @@
+nav.navbar.navbar-default.navbar-inverse
+  div.container-fluid
+    div.navbar-header
+      a.navbar-brand(href="/") Какое-то приложение 2
+    div.collapse.navbar-collapse(id="bs-example-navbar-collapse-1")
+      ul.nav.navbar-nav
+        if user
+          ul.nav.navbar-nav
+            li.dropdown
+              a.dropdown-toggle(
+              href="#"
+              data-toggle="dropdown"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+              ) Посты
+                span.caret
+              ul.dropdown-menu
+                li: a(href='/post/page1') Очередь постов
+                li: a(href='/post/add') Добавить пост
+                li: a(href='/post/corovan') Грабить корованы &copy;
+                li: a(href='/post/schedule') Распределить расписание
+                li: a(href='/post/compress') Сжать расписание
+                li: a(href='/post/catchup') Подтянуть хвосты
+            li.dropdown
+              a.dropdown-toggle(
+              href="#"
+              data-toggle="dropdown"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+              ) Источники
+                span.caret
+              ul.dropdown-menu
+                li: a(href='/source/list') Источники
+                li: a(href='/source/add') Добавить источник
+          li
+            a(href="/users/") Пользователи
+        else
+          li
+            a(href="/users/login") Вход

@@ -1,0 +1,27 @@
+extends ../layout
+block content
+  form.form-horizontal(
+  method='post'
+  action='/users/create'
+  )
+    div.form-group
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="login"
+        id="inputLogin"
+        placeholder="Логин"
+        )
+    div.form-group
+      div.col-sm-2
+        input.form-control(
+        type="password"
+        name="password"
+        id="inputPassword"
+        placeholder="Пароль"
+        )
+    div.form-group
+      div.col-sm-2
+        button.btn.btn-default(
+        type="submit"
+        ) Создать

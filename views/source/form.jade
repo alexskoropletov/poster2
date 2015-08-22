@@ -1,0 +1,41 @@
+div.form-group
+  label.col-sm-2.control-label(
+  for="inputUrl"
+  ) URL
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="url"
+    id="inputUrl"
+    placeholder="URL источника"
+    value=source.url
+    )
+div.form-group
+  label.col-sm-2.control-label(
+  for="inputRate"
+  ) Рейтинг
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="rate"
+    id="inputRate"
+    placeholder="Рейтинг обновления (от 0.0 до 1.0) - на данный момент не влияет ни на что"
+    value=source.rate
+    )
+div.form-group
+  label.col-sm-2.control-label(
+  for="inputLatest"
+  ) Последняя картинка
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="latest"
+    id="inputLatest"
+    placeholder="Последняя картинка"
+    value=source.latest
+    )
+div.form-group
+  div.col-sm-offset-2.col-sm-10
+    button.btn.btn-default(
+    type="submit"
+    ) Добавить

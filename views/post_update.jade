@@ -1,0 +1,7 @@
+extends layout
+block content
+  form.form-horizontal(
+  method='post'
+  action='/post/update/' + post._id
+  )
+    include ./includes/post_form.jade

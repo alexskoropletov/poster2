@@ -1,0 +1,29 @@
+extends ../layout
+block content
+  form.form-horizontal(
+  method='post'
+  action='/post/captcha'
+  )
+    input(
+      type='hidden'
+      name='sid'
+      value=sid
+    )
+    div.form-group
+      div.col-sm-offset-1.col-sm-10
+        img(src=img)
+    div.form-group
+      label.col-sm-1.control-label(
+      for="inputTitle"
+      ) Капча
+      div.col-sm-10
+        input.form-control(
+        type="text"
+        name="captcha_key"
+        id="inputTitle"
+        )
+    div.form-group
+      div.col-sm-offset-1.col-sm-10
+        button.btn.btn-default(
+        type="submit"
+        ) Отправить

@@ -1,0 +1,28 @@
+var config = {
+  post: {
+    distance  : 20 * 60 * 1000, //20 min - time distance between posts
+    first     : 5 * 60 * 1000, //5 min - time distance to first post after time compression
+    next      : 10 * 60 * 1000 //10 min - time distance to other posts after time compression
+  },
+  tumblr: {
+    consumer_key    : "",
+    consumer_secret : "",
+    token           : "",
+    token_secret    : ""
+  },
+  vk: {
+    user_id       : '',
+    appID         : '',
+    appSecret     : "",
+    mode          : "oauth",
+    access_token  : ""
+  }
+};
+
+exports.get = function(key) {
+  key = key.split(".");
+  return config[key[0]][key[1]];
+};
+exports.random = function() {
+  return 1000 * Math.round(Math.random() * 10 * 60 * 30); // 30 min
+};

@@ -1,0 +1,38 @@
+{
+  "name": "poster3",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node ./bin/www"
+  },
+  "dependencies": {
+    "1vk": "^1.0.2",
+    "async": "*",
+    "bcrypt": "^0.8.4",
+    "body-parser": "~1.13.2",
+    "bootstrap": "*",
+    "bootstrap-datepicker": "*",
+    "cookie-parser": "~1.3.5",
+    "cron": "^1.0.9",
+    "debug": "~2.2.0",
+    "eonasdan-bootstrap-datetimepicker": "*",
+    "express": "~4.13.1",
+    "express-session": "^1.7.6",
+    "ejs": "^1.0.0",
+    "jade": "~1.11.0",
+    "mime": "*",
+    "mongodb": "*",
+    "mongoose": "3.8.1",
+    "morgan": "~1.6.1",
+    "passport": "*",
+    "passport-facebook": "*",
+    "passport-google": "*",
+    "passport-local": "*",
+    "request": "*",
+    "restler": "*",
+    "serve-favicon": "~2.3.0",
+    "tumblr": "*",
+    "tumblr.js": "*",
+    "vksdk": "*"
+  }
+}

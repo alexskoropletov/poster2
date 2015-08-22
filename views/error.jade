@@ -1,0 +1,7 @@
+extends layout
+
+block content
+  h1 Woops
+  h2= error.status
+  p Ошибка работы приложения
+  pre #{error.stack}

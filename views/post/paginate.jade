@@ -1,0 +1,7 @@
+nav
+  ul.pagination
+    each page, index in pages
+      if (index == current_page)
+        li.active: a(href=page)= index
+      else
+        li: a(href=page)= index

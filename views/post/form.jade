@@ -1,0 +1,95 @@
+each val in images
+  div.images-container
+    div.form-group.cloning-image-url
+      label.col-sm-1.control-label(
+      for="inputImageUrl"
+      ) URL
+      div.col-sm-3
+        img(src=val.image_preview_url)
+      div.col-sm-3
+        input.form-control(
+        type="text"
+        name="imageUrl[" + val._id + "]"
+        placeholder="URL картинки"
+        )
+      div.col-sm-3
+        select.form-control(
+        name="imageType[" + val._id + "]"
+        )
+          case val.type
+            when 'document'
+              option(value="image") Изображение
+              option(value="document", selected="selected") Документ
+            default
+              option(value="image", selected="selected") Изображение
+              option(value="document") Документ
+div.images-container
+  div.form-group.cloning-image-url
+    label.col-sm-1.control-label(
+    for="inputImageUrl"
+    ) URL
+    div.col-sm-5
+      input.form-control(
+      type="text"
+      name="imageUrl[]"
+      placeholder="URL картинки"
+      )
+    div.col-sm-5
+      select.form-control(
+      name="imageType[]"
+      )
+        option(value="image", selected="selected") Изображение
+        option(value="document") Документ
+div.form-group
+  div.col-sm-offset-1.col-sm-10
+    button.btn.btn-default(
+    id="more-images"
+    type="button"
+    ) +
+div.form-group
+  label.col-sm-1.control-label(
+  for="inputWhen"
+  ) Дата
+  div.col-sm-1
+    div.container
+      div.row
+        div.col-sm-6
+          div.form-group
+            div.input-group.date(id='datetimepicker2')
+              input.form-control(
+                type='text'
+                name="when"
+                id="inputWhen"
+                data-date=post.when.getTime()
+              )
+              span.input-group-addon
+                span.glyphicon.glyphicon-calendar
+div.form-group
+  label.col-sm-1.control-label(
+  for="inputTitle"
+  ) Заголовок
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="title"
+    id="inputTitle"
+    placeholder="Заголовок поста"
+    value=post.title
+    )
+div.form-group
+  label.col-sm-1.control-label(
+  for="inputDescription"
+  ) Описание
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="description"
+    id="inputDescription"
+    placeholder="Описание"
+    value=post.description
+    )
+div.form-group
+  div.col-sm-offset-1.col-sm-10
+    button.btn.btn-default(
+    type="submit"
+    ) Сохранить

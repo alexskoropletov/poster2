@@ -1,0 +1,39 @@
+extends ../layout
+block content
+  include paginate
+  table.table
+    thead
+      tr
+        th= Когда
+        th= Заголовок
+        th= Описание
+        th= Файлы
+        th
+          -
+        th
+          -
+        th
+          -
+    tbody
+      each val in posts
+        tr(id="postid" + val._id)
+          th(scope="row")= new Date(val.when.getTime() + 60 * 60 * 1000).getFullYear() +"/"+("0" + (new Date(val.when.getTime() + 60 * 60 * 1000).getMonth()+1)).slice(-2) +"/"+("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getDate()).slice(-2) + "\n" +("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getHours()).slice(-2) + ":" +("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getMinutes()).slice(-2)
+          td= val.title
+          td= val.description
+          td
+            each image in postImages[val._id]
+              a(href=image.image_url, target='_blank')
+                img(src=image.image_preview_url)
+          td
+            a(href="/post/do_post/" + val._id)
+              span.glyphicon.glyphicon-star-empty(aria-hidden="true")
+          td
+            a(href="/post/edit/" + val._id)
+              span.glyphicon.glyphicon-pencil(aria-hidden="true")
+          td
+            a.delete_link(
+              href="javascript: void(0);"
+              data-post="" + val._id
+            )
+              span.glyphicon.glyphicon-remove(aria-hidden="true")
+  include paginate
