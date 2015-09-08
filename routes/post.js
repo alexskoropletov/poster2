@@ -10,7 +10,7 @@ var express = require('express'),
   tumblr = require('../bin/tumblr');
 
 router.all('*', function(req, res, next) {
-  if (req.session.user_id) {
+  if (req.session.user) {
     next();
   } else {
     res.redirect("/users/login");
@@ -37,7 +37,7 @@ router.get('/do_post/:post_id', function (req, res) {
   poster2.doPost(filter, function(err) {
     if (err) {
       if (err.error && err.error.error_code == 14) {
-        res.render('common/vkcaptcha', {title: "Капча VK", sid: err.error.captcha_sid, img: err.error.captcha_img});
+        res.render('common/vkcaptcha', {subtitle: "Капча VK", sid: err.error.captcha_sid, img: err.error.captcha_img});
       } else {
         console.log(err);
         res.redirect('/post/page1');
@@ -51,7 +51,7 @@ router.post('/captcha', function(req, res) {
   vk.getImageUploadUrlCaptcha(req.body, function(err, response) {
     if (err) {
       if (err.error_code == 14) {
-        res.render('common/vkcaptcha', {title: "Капча VK", sid: err.captcha_sid, img: err.captcha_img});
+        res.render('common/vkcaptcha', {subtitle: "Капча VK", sid: err.captcha_sid, img: err.captcha_img});
       } else {
         res.send(err);
       }
@@ -77,7 +77,7 @@ router.get('/compress', function (req, res) {
 
 /* работа с постами */
 router.get('/page:page', function (req, res, next) {
-  poster2.getMainPage(req.params.page, req.session.user_id, function(parameters) {
+  poster2.getMainPage(req, function(parameters) {
     res.render(
       'post/list',
       parameters
@@ -88,7 +88,7 @@ router.get('/page:page', function (req, res, next) {
 /* форма добавления */
 router.get('/add', function (req, res) {
   Post.findOne({posted: false}).sort({when: -1}).exec(function(err, post) {
-    res.render('post/add', {user: req.session.user_id, title: 'Добавить пост', post: {when: new Date(post.when.getTime() + 46 * 60 + 60 * 1000)}, images: {} });
+    res.render('post/add', {subtitle: 'Добавить пост', post: {when: new Date(post.when.getTime() + 46 * 60 + 60 * 1000)}, images: {} });
   });
 });
 
@@ -97,7 +97,7 @@ router.post('/save', function (req, res) {
   if (req.body['imageUrl[]'].length) {
     new Post({
       when: Date.parse(req.body.when),
-      title: req.body.title,
+      subtitle: req.body.title,
       description: req.body.description
     }).save(function(err, post, count) {
         if (req.body['imageUrl[]'].constructor !== Array) {
@@ -136,7 +136,7 @@ router.post('/destroy', function (req, res) {
 router.get('/edit/:id', function (req, res) {
   Post.findById(req.params.id, function (err, post) {
     PostImage.find({post: post._id}, function(err, images) {
-      res.render('post/update', {user: req.session.user_id, title: 'Редактирование поста', post: post, images: images});
+      res.render('post/update', {subtitle: 'Редактирование поста', post: post, images: images});
     });
   });
 });
@@ -161,6 +161,23 @@ router.get('/schedule', function (req, res) {
 router.get('/catchup', function (req, res) {
   poster2.catchUp(function() {
     res.redirect("/post/page1");
+  });
+});
+
+router.post('/approve', function (req, res) {
+  Post.findOne({_id: req.body.id}, function(err, post) {
+    if (post) {
+      post.approved = post.approved ? false : true;
+      post.save(function(err, post, count) {
+        if (post.approved) {
+          res.render('common/item_active');
+        } else {
+          res.render('common/item_inactive');
+        }
+      });
+    } else {
+      res.render('common/item_inactive');
+    }
   });
 });
 

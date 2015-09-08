@@ -1,4 +1,5 @@
 $(function() {
+  //posts
   $('.datepicker').datepicker({
     format: 'mm/dd/yyyy',
     startDate: '+1d'
@@ -24,5 +25,19 @@ $(function() {
       }
     }, 'json');
     return false;
+  });
+  //users
+  $(".user_active").click(function() {
+    var self = this;
+    $.post("/users/active", {id: $(this).data('id')}, function(data) {
+      $(self).html(data);
+    });
+  });
+  //posts
+  $(".post_approved").click(function() {
+    var self = this;
+    $.post("/post/approve", {id: $(this).data('id')}, function(data) {
+      $(self).html(data);
+    });
   });
 });

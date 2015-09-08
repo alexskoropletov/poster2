@@ -1,3 +1,4 @@
+- console.log(source);
 div.form-group
   label.col-sm-2.control-label(
   for="inputUrl"
@@ -12,30 +13,44 @@ div.form-group
     )
 div.form-group
   label.col-sm-2.control-label(
-  for="inputRate"
-  ) Рейтинг
+  for="inputComment"
+  ) Комментарий
   div.col-sm-10
     input.form-control(
     type="text"
-    name="rate"
-    id="inputRate"
-    placeholder="Рейтинг обновления (от 0.0 до 1.0) - на данный момент не влияет ни на что"
-    value=source.rate
+    name="comment"
+    id="inputComment"
+    placeholder="Комментарий"
+    value=source.comment
     )
 div.form-group
   label.col-sm-2.control-label(
-  for="inputLatest"
-  ) Последняя картинка
+  for="inputGroups"
+  ) Группа
   div.col-sm-10
-    input.form-control(
-    type="text"
-    name="latest"
-    id="inputLatest"
-    placeholder="Последняя картинка"
-    value=source.latest
-    )
+    - console.log(!source.group);
+    select.form-control(name="group", autocomplete="off")
+      option(value="") Моя страница
+      if groups.length
+        each val in groups
+          if JSON.stringify(val._id) == JSON.stringify(source.group)
+            option(value=val._id, selected="selected")= val.name
+          else
+            option(value=val._id)= val.name
+div.form-group
+  label.col-sm-2.control-label(
+  for="inputApproved"
+  ) По умочанию
+  div.col-sm-10
+    select.form-control(name="approved", id="inputApproved", autocomplete="off")
+      if source.approved
+        option(value="true", selected="selected") посты одобрены
+        option(value="false") посты ожидают одобрения
+      else
+        option(value="true") посты одобрены
+        option(value="false", selected="selected") посты ожидают одобрения
 div.form-group
   div.col-sm-offset-2.col-sm-10
     button.btn.btn-default(
     type="submit"
-    ) Добавить
+    ) Сохранить

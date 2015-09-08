@@ -1,0 +1,38 @@
+input(
+type="hidden"
+name="user"
+value=current_user._id
+)
+div.form-group
+  label.col-sm-2.control-label(for="inputName") Название
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="name"
+    id="inputName"
+    placeholder="Название"
+    value=group.name
+    )
+div.form-group
+  label.col-sm-2.control-label(for="inputUrl") Адрес
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="url"
+    id="inputUrl"
+    placeholder="Адрес"
+    value=group.url
+    )
+div.form-group
+  label.col-sm-2.control-label(for="inputVkId") ID группы Вконтакте
+  div.col-sm-10
+    input.form-control(
+    type="text"
+    name="vk_id"
+    id="inputVkId"
+    placeholder="ID группы Вконтакте"
+    value=group.vk_id
+    )
+div.form-group
+  div.col-sm-offset-2.col-sm-10
+    button.btn.btn-default(type="submit") Сохранить

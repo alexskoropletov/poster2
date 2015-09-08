@@ -1,33 +1,39 @@
 extends ../layout
 
 block content
-  table.table
-    thead
-      tr
-        th= URL
-        th= Рейтинг
-        th= Последняя
-        th
-          -
-        th
-          -
-    tbody
-      each val in sources
+  if sources.length
+    table.table
+      thead
         tr
-          th(scope="row")= val.url
-          td= val.rate
-          td
-            if val.latest
-              div.row
-                div.col-xs-6.col-md-3
-                  a.thumbnail(href="#")
-                    img(
-                      src=val.latest
-                    )
-          td
-            a(href="/source/edit/" + val._id)
-              span.glyphicon.glyphicon-pencil(aria-hidden="true")
-          td
-            a(href="/source/destroy/" + val._id)
-              span.glyphicon.glyphicon-remove(aria-hidden="true")
-
+          th URL
+          th Группа
+          th По умолчанию
+          th Комментарий
+          th Редактировать
+          th Удалить
+      tbody
+        each val in sources
+          tr
+            td
+              a(href="http://" + val.url, target="_blank")= val.url
+            td
+              if val.group && val.group != 'user'
+                each group in groups
+                  if JSON.stringify(group._id) == JSON.stringify(val.group)
+                    = group.name
+              else
+                Моя страница
+            td
+              if val.approved
+                Посты одобрены
+              else
+                Посты ожидают одобрения
+            td= val.comment
+            td
+              a(href="/source/edit/" + val._id)
+                span.glyphicon.glyphicon-pencil(aria-hidden="true")
+            td
+              a(href="/source/destroy/" + val._id)
+                span.glyphicon.glyphicon-remove(aria-hidden="true")
+  else
+    span.label.label-warning Ваш список источников пуст

@@ -1,0 +1,30 @@
+extends ../layout
+
+block content
+  if groups.length
+    table.table
+      thead
+        tr
+          th Название
+          th Адрес
+          th Id в VK
+          th Редактировать
+          th Удалить
+      tbody
+        each val in groups
+          tr
+            td= val.name
+            td
+              if val.url
+                a(href=val.url, target="_blank")= val.url
+              else
+                -
+            td= val.vk_id
+            td
+              a(href="/group/edit/" + val._id)
+                span.glyphicon.glyphicon-pencil(aria-hidden="true")
+            td
+              a(href="/group/destroy/" + val._id)
+                span.glyphicon.glyphicon-remove(aria-hidden="true")
+  else
+    span.label.label-warning Ваш список групп пуст

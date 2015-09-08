@@ -1,5 +1,6 @@
 var mongoose = require('mongoose'),
     Source = mongoose.model('Source'),
+    Group = mongoose.model('Group'),
     Post = mongoose.model('Post'),
     PostImage = mongoose.model('PostImage'),
     vk = require('../bin/vk'),
@@ -71,32 +72,40 @@ function addPostTime(date, end) {
 
 exports.addPostTime = addPostTime;
 
-exports.getMainPage = function(page, user_id, showList) {
+exports.getMainPage = function(req, showList) {
   var postImages = {};
-  Post.count({posted: false}, function(err, count) {
+  Post.count({posted: false, user: req.session.user._id}, function(err, count) {
     var per_page = 50;
-    var skip = (page - 1) * per_page > count ? 0 : (page - 1) * per_page;
+    var skip = (req.params.page- 1) * per_page > count ? 0 : (req.params.page - 1) * per_page;
     var pages = {};
     for (var x = 1; x <= Math.ceil(count / per_page); x++) {
       pages[x] = "/post/page" + x;
     }
-    Post.find({posted: false}).sort({"when": 1}).limit(per_page).skip(skip).exec(function (err, posts) {
-      async.forEach(posts, function (post, callback){
+    Post.find(
+      {
+        posted: false,
+        user: req.session.user._id
+      }
+    ).sort({"when": 1}).limit(per_page).skip(skip).exec(function (err, posts) {
+      async.forEachOf(posts, function (post, index, callback) {
         PostImage.find({post: post._id}, function(err, images) {
           postImages[post._id] = images;
+          posts[index].group_name = "111";
           callback();
         });
       }, function(err) {
-        showList(
-          {
-            title: 'Очередь постов',
-            user: user_id,
-            posts: posts,
-            postImages: postImages,
-            pages: pages,
-            current_page: page
-          }
-        );
+        Group.find({user: req.session.user._id}, '_id name', function(err, groups) {
+          showList(
+            {
+              subtitle: 'Очередь постов',
+              posts: posts,
+              postImages: postImages,
+              pages: pages,
+              groups: groups,
+              current_page: req.params.page
+            }
+          );
+        });
       });
     });
   });

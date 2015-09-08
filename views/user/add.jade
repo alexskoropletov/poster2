@@ -1,0 +1,75 @@
+extends ../layout
+block content
+  form.form-horizontal(method='post', action='/users/save')
+    if user._id
+      input(type='hidden', name='id', value=user._id)
+    div.form-group
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="name"
+        id="inputName"
+        placeholder="Имя"
+        value=user.name
+        )
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="login"
+        id="inputLogin"
+        placeholder="Логин"
+        value=user.login
+        )
+      div.col-sm-2
+        input.form-control(
+        type="password"
+        name="password"
+        id="inputPassword"
+        placeholder="Пароль"
+        )
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="email"
+        id="inputEmail"
+        placeholder="E-mail"
+        value=user.email
+        )
+    div.form-group
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="vk_user_id"
+        id="inputVkUserId"
+        placeholder="Id пользователя в VK"
+        value=user.vk_user_id
+        )
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="vk_token"
+        id="inputVkToken"
+        placeholder="Токен доступа"
+        value=user.vk_token
+        )
+    div.form-group
+      div.col-sm-4
+        select.form-control(name="role")
+          if user.role == 'admin'
+            option(value="user") Пользователь
+            option(value="admin", selected="selected") Администратор
+          else
+            option(value="user", selected="selected") Пользователь
+            option(value="admin") Администратор
+      div.col-sm-2
+        Активен &nbsp;
+        a.user_active(href="javascript:void(0);", data-id="" + user._id)
+          if user.is_active
+            include ../common/item_active
+          else
+            include ../common/item_inactive
+    div.form-group
+      div.col-sm-2
+        button.btn.btn-default(
+        type="submit"
+        ) Сохранить

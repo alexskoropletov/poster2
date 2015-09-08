@@ -3,8 +3,32 @@ block content
   table.table
     thead
       tr
-        th= Логин
+        th Имя
+        th Логин
+        th E-mail
+        th Роль
+        th Активен
+        th Действия
     tbody
       each val in users
         tr
-          th= val.login
+          td= val.name
+          td= val.login
+          td= val.email
+          td
+            if val.role == 'admin'
+              Администратор
+            else
+              Пользователь
+          td
+            a.user_active(href="javascript:void(0);", data-id="" + val._id)
+              if val.is_active
+                include ../common/item_active
+              else
+                include ../common/item_inactive
+          td
+            a(href="/users/edit/" + val._id)
+              span.glyphicon.glyphicon-pencil(aria-hidden="true")
+            &nbsp;
+            a.user_delete(href="javascript: void(0);", data-id="" + val._id)
+              span.glyphicon.glyphicon-remove(aria-hidden="true")

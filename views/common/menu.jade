@@ -4,38 +4,66 @@ nav.navbar.navbar-default.navbar-inverse
       a.navbar-brand(href="/") Какое-то приложение 2
     div.collapse.navbar-collapse(id="bs-example-navbar-collapse-1")
       ul.nav.navbar-nav
-        if user
-          ul.nav.navbar-nav
-            li.dropdown
-              a.dropdown-toggle(
-              href="#"
-              data-toggle="dropdown"
-              role="button"
-              aria-haspopup="true"
-              aria-expanded="false"
-              ) Посты
-                span.caret
-              ul.dropdown-menu
-                li: a(href='/post/page1') Очередь постов
-                li: a(href='/post/add') Добавить пост
-                li: a(href='/post/corovan') Грабить корованы &copy;
-                li: a(href='/post/schedule') Распределить расписание
-                li: a(href='/post/compress') Сжать расписание
-                li: a(href='/post/catchup') Подтянуть хвосты
-            li.dropdown
-              a.dropdown-toggle(
-              href="#"
-              data-toggle="dropdown"
-              role="button"
-              aria-haspopup="true"
-              aria-expanded="false"
-              ) Источники
-                span.caret
-              ul.dropdown-menu
-                li: a(href='/source/list') Источники
-                li: a(href='/source/add') Добавить источник
+        if current_user && current_user._id
+          li.dropdown
+            a.dropdown-toggle(
+            href="#"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            ) Мои посты
+              span.caret
+            ul.dropdown-menu
+              li: a(href='/post/page1') Список
+              li: a(href='/post/add') Добавить пост
+              li: a(href='/post/corovan') Грабить корованы &copy;
+              li: a(href='/post/schedule') Распределить расписание
+              li: a(href='/post/compress') Сжать расписание
+              li: a(href='/post/catchup') Подтянуть хвосты
+          li.dropdown
+            a.dropdown-toggle(
+            href="#"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            ) Мои источники
+              span.caret
+            ul.dropdown-menu
+              li: a(href='/source/list') Список
+              li: a(href='/source/add') Добавить источник
+          li.dropdown
+            a.dropdown-toggle(
+            href="#"
+            data-toggle="dropdown"
+            role="button"
+            aria-haspopup="true"
+            aria-expanded="false"
+            ) Мои группы
+              span.caret
+            ul.dropdown-menu
+              li: a(href='/group/') Список
+              li: a(href='/group/add') Добавить группу
           li
-            a(href="/users/") Пользователи
+            a(href="/personal") Мои настройки
+          if current_user && current_user.role == 'admin'
+            li.dropdown
+              a.dropdown-toggle(
+              href="/users/"
+              data-toggle="dropdown"
+              role="button"
+              aria-haspopup="true"
+              aria-expanded="false"
+              ) Пользователи
+                span.caret
+              ul.dropdown-menu
+                li: a(href='/users/') Список
+                li: a(href='/users/add') Добавить пользователя
+          li
+            a(href="/users/logout") Выход
         else
           li
             a(href="/users/login") Вход
+          li
+            a(href="/users/register") Регистрация
