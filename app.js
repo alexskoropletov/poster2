@@ -1,17 +1,20 @@
 var db = require('./bin/db'),
-    cronjobs = require('./bin/cron'),
-    express = require('express'),
-    path = require('path'),
-    favicon = require('serve-favicon'),
-    logger = require('morgan'),
-    cookieParser = require('cookie-parser'),
-    bodyParser = require('body-parser'),
-    routes = require('./routes/index'),
-    users = require('./routes/users'),
-    post = require('./routes/post'),
-    source = require('./routes/source'),
-    session = require('express-session'),
-    passport = require('passport');
+  cronjobs = require('./bin/cron'),
+  express = require('express'),
+  path = require('path'),
+  favicon = require('serve-favicon'),
+  logger = require('morgan'),
+  cookieParser = require('cookie-parser'),
+  bodyParser = require('body-parser'),
+///////////////////////////////////////////
+  main_routes = require('./routes/index'),
+  user_routes = require('./routes/users'),
+  post_routes = require('./routes/post'),
+  source_routes = require('./routes/source'),
+  group_routes = require('./routes/group'),
+///////////////////////////////////////////
+  session = require('express-session'),
+  passport = require('passport');
 
 var app = express();
 
@@ -28,10 +31,11 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(session({secret: 'keyboard kate', saveUninitialized: true, resave: true}));
 //routes
-app.use('/', routes);
-app.use('/users', users);
-app.use('/post', post);
-app.use('/source', source);
+app.use('/', main_routes);
+app.use('/users', user_routes);
+app.use('/post', post_routes);
+app.use('/source', source_routes);
+app.use('/group', group_routes);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
