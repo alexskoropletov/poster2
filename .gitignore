@@ -30,3 +30,6 @@ node_modules
 # Production config 
 bin/config.js.prod
 
+
+# Php-storm
+.idea

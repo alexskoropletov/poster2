@@ -10,7 +10,7 @@ router.all('*', function(req, res, next) {
     '/logout',
     '/register'
   ];
-  if (access.indexOf(req.url) >= 0 || req.session.user.role == 'admin') {
+  if (access.indexOf(req.url) >= 0 || (req.session.user && req.session.user.role == 'admin')) {
     next();
   } else {
     res.redirect("/users/login");
