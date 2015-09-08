@@ -34,6 +34,13 @@ getRequest = function(getOptions, method, callback) {
         }
       })
   });
+  req.on('socket', function(socket) {
+    socket.setTimeout(30000);
+    socket.on('timeout', function() {
+      console.log('Преывшен таймаут в 30 секунд для GET-запроса');
+      req.abort();
+    });
+  });
   req.on('error', function(e) {
     callback(e, null)
   });
@@ -110,32 +117,44 @@ exports.uploadDoc = function(image, upload_url, callback) {
 };
 
 exports.saveImage = function(response, callback) {
-  var getOptions = [
-    'user_id=' + config.get("vk.user_id"),
-    'access_token=' + config.get("vk.access_token"),
-    'photo=' + response.photo,
-    'server=' + response.server,
-    'hash=' + response.hash
-  ];
-  getRequest(getOptions, 'photos.saveWallPhoto', function(err, res) {
-    if (res.response) {
-      callback(res.response);
-    } else {
-      console.log(err);
-      callback(res);
-    }
-  });
+  if (response) {
+    var getOptions = [
+      'user_id=' + config.get("vk.user_id"),
+      'access_token=' + config.get("vk.access_token"),
+      'photo=' + response.photo,
+      'server=' + response.server,
+      'hash=' + response.hash
+    ];
+    getRequest(getOptions, 'photos.saveWallPhoto', function(err, res) {
+      if (res.response) {
+        callback(res.response);
+      } else {
+        console.log(err);
+        callback({
+          error: new Error("empty vk response on photos.saveWallPhoto"),
+          res: res,
+          err: err
+        });
+      }
+    });
+  } else {
+    callback({error: new Error("empty vk response on image save")});
+  }
 };
 
 exports.saveDoc = function(response, callback) {
-  var getOptions = [
-    'user_id=' + config.get("vk.user_id"),
-    'access_token=' + config.get("vk.access_token"),
-    'file=' + response.file
-  ];
-  getRequest(getOptions, 'docs.save', function(err, res) {
-    callback(res.response);
-  });
+  if (response) {
+    var getOptions = [
+      'user_id=' + config.get("vk.user_id"),
+      'access_token=' + config.get("vk.access_token"),
+      'file=' + response.file
+    ];
+    getRequest(getOptions, 'docs.save', function(err, res) {
+      callback(res.response);
+    });
+  } else {
+    callback({error: new Error("empty vk response on file save")});
+  }
 };
 
 exports.wallPost = function(post, posts, callback) {

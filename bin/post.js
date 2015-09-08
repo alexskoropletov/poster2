@@ -175,24 +175,23 @@ exports.doPost = function(filter, doAfterPost) {
                               if (response.error) {
                                 saveImageCallback(response.error);
                               } else {
-                                response.response[0].id = 'doc' + response.response[0].owner_id + "_" + response.response[0].did;
+                                console.log(response);
+                                response[0].id = 'doc' + response[0].owner_id + "_" + response[0].did;
                                 saveImageCallback(null, response);
                               }
                             });
                           });
                         } else {
                           vk.uploadImage(image, image_upload_url, function(vk_res) {
-                            if (vk_res) {
-                              vk.saveImage(JSON.parse(vk_res), function(response) {
-                                if (response.error) {
-                                  saveImageCallback(response.error);
-                                } else {
-                                  saveImageCallback(null, response);
-                                }
-                              });
-                            } else {
-                              saveImageCallback(vk_res);
-                            }
+                            console.log("vk.uploadImage function response ", vk_res);
+                            vk.saveImage(JSON.parse(vk_res), function(response) {
+                              console.log("vk.saveImage function response ", response);
+                              if (response.error) {
+                                saveImageCallback(response.error);
+                              } else {
+                                saveImageCallback(null, response);
+                              }
+                            });
                           });
                         }
                         console.log("Файл отправлен в ВК", "\n");
@@ -204,22 +203,26 @@ exports.doPost = function(filter, doAfterPost) {
                       saveImage,
                       function(err, results) {
                         if (err) {
-                          console.log('В процессе сохранения изображений произощла ошибка', err, "\n");
+                          console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
                           doAfterPost(err);
                         } else {
-                          console.log('Будут сохранены следуюие данные', results, "\n");
-                          vk.wallPost(post, results, function(postSaved) {
-                            console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
-                            if (typeof postSaved.response != 'undefined') {
-                              console.log("Отмечаем пост как отправленный", post);
-                              post.posted = true;
-                              post.save(function(err, post) {
-                                doAfterPost();
-                              });
-                            } else {
-                              doAfterPost(postSaved);
-                            }
-                          });
+                          console.log('Будут сохранены следущюие данные', results, "\n");
+                          if (results) {
+                            vk.wallPost(post, results, function(postSaved) {
+                              console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
+                              if (typeof postSaved.response != 'undefined') {
+                                console.log("Отмечаем пост как отправленный", post);
+                                post.posted = true;
+                                post.save(function(err, post) {
+                                  doAfterPost();
+                                });
+                              } else {
+                                doAfterPost(postSaved);
+                              }
+                            });
+                          } else {
+                            doAfterPost({error: 'empty posts list'});
+                          }
                         }
                       }
                     );

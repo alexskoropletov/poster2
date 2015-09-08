@@ -6,12 +6,17 @@ var User = new Schema({
   login: String,
   password: String,
   email: String,
+  vk_group_id: String,
+  vk_user_id: String,
+  vk_token: String,
+  role: {type: String, enum: ['admin','user']},
   updated_at: Date
 });
 
+
 var Source = new Schema({
+  user: {type: ObjectId, ref: 'User'},
   url: String,
-  rate: String,
   updated_at: Date
 });
 var SourcePost = new Schema({
@@ -24,14 +29,14 @@ var SourcePost = new Schema({
 var Post = new Schema({
   when: {type: Date, default: Date.now},
   description: String,
-  title: String,
+  user: {type: ObjectId, ref: 'User'},
+  approved: {type: Boolean, default: false},
   posted: {type: Boolean, default: false}
 });
-var imagePostTypes = 'image document'.split(' ')
 var PostImage = new Schema({
   image_url: String,
   image_preview_url: String,
-  type: {type: String, enum: imagePostTypes},
+  type: {type: String, enum: ['image','document']},
   post: {type: ObjectId, ref: 'Post'}
 });
 

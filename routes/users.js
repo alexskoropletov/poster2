@@ -4,14 +4,23 @@ var express = require('express'),
   bcrypt = require('bcrypt'),
   router = express.Router();
 
-router.get('/', function (req, res, next) {
-  if (req.session.user_id) {
-    User.find({}, function(err, users) {
-      res.render('user/list', {user: req.session.user_id, title: 'Список пользователей', users: users});
-    });
+router.all('*', function(req, res, next) {
+  var access = [
+    '/login',
+    '/logout',
+    '/register'
+  ];
+  if (access.indexOf(req.url) >= 0 || req.session.user_id) {
+    next();
   } else {
     res.redirect("/users/login");
   }
+});
+
+router.get('/', function (req, res, next) {
+  User.find({}, function(err, users) {
+    res.render('user/list', {user: req.session.user_id, title: 'Список пользователей', users: users});
+  });
 });
 
 router.get('/login', function (req, res) {
@@ -35,25 +44,17 @@ router.post('/login', function (req, res) {
 });
 
 router.get('/create', function (req, res) {
-  if (req.session.user_id) {
-    res.render('user/create', {user: req.session.user_id, title: 'Создание пользователя'});
-  } else {
-    res.redirect("/users/login");
-  }
+  res.render('user/create', {user: req.session.user_id, title: 'Создание пользователя'});
 });
 router.post('/create', function (req, res) {
-  if (req.session.user_id) {
-    bcrypt.hash(req.body.password, 10, function(err, hash) {
-      new User({
-        login: req.body.login,
-        password: hash
-      }).save(function(err, user, count) {
-          res.redirect("/users/")
-        });
-    });
-  } else {
-    res.redirect("/users/login");
-  }
+  bcrypt.hash(req.body.password, 10, function(err, hash) {
+    new User({
+      login: req.body.login,
+      password: hash
+    }).save(function(err, user, count) {
+        res.redirect("/users/")
+      });
+  });
 });
 
 module.exports = router;
