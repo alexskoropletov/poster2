@@ -3,14 +3,25 @@ var express = require('express'),
   mongoose = require('mongoose'),
   User = mongoose.model('User'),
   config = require('../bin/config'),
+  https = require('https'),
   async = require('async');
 
 router.all('*', function(req, res, next) {
   res.locals.title = config.get('common.title');
   res.locals.config = config;
   res.locals.current_user = req.session.user || {};
-  if (req.url != "/personal" && req.session.user && !req.session.user.vk_user_id) {
-    res.render('common/personal', {subtitle: "Мои настройки", error: ["Поле 'Id в VK' обязательно для заполнения"]});
+  console.log(req.url);
+  if (req.url.indexOf("/vk_code") < 0 && req.url != "/users/logout" && req.url != "/personal" && req.session.user && (!req.session.user.vk_user_id || !req.session.user.vk_token)) {
+    res.render(
+      'common/personal',
+      {
+        subtitle: "Мои настройки",
+        error: [
+          "Поле 'Id в VK' обязательно для заполнения",
+          "Нужно обязательно получить токен доступа"
+        ]
+      }
+    );
   } else {
     next();
   }
@@ -101,13 +112,69 @@ router.post('/personal', function (req, res) {
   });
 });
 
-router.get("/vk_code", function(req, res) {
-//  if (typeof req.query.code != 'undefined') {
-//    res.redirect('https://oauth.vk.com/access_token?client_id=' + config.appID + '&redirect_uri=http://wizee.ninja/vk_code&client_secret=' + config.appSecret + '&code=' + req.query.code);
-//  } else {
-//    res.redirect("https://oauth.vk.com/authorize?client_id=" + config.appID + "&scope=friends,photos,audio,video,docs,wall,offline&response_type=code&redirect_uri=http://wizee.ninja/vk_code")
-//  }
-  res.send("code");
+router.get("/vk_code/:user_id", function(req, res) {
+  console.log(req.query, req.params);
+  console.log(JSON.stringify(req.session.user._id), JSON.stringify(req.params.user_id), (JSON.stringify(req.session.user._id) == JSON.stringify(req.params.user_id)));
+  if (req.session.user && JSON.stringify(req.session.user._id) == JSON.stringify(req.params.user_id)) {
+    User.findOne({_id: req.params.user_id, is_active: true}, function(err, user) {
+      if (user) {
+        if (typeof req.query.code != 'undefined') {
+          var getOptions = [
+            "client_id=" + config.get('vk.appID'),
+            "client_secret=" + config.get('vk.appSecret'),
+            "code=" + req.query.code,
+            "redirect_uri=" + encodeURIComponent("http://wizee.ninja/vk_code/" + req.params.user_id)
+          ];
+          var options = {
+            host: 'oauth.vk.com',
+            path: '/access_token?' + getOptions.join("&")
+          };
+          console.log("get request options", options, "\n");
+          var request = https.get(options, function(response) {
+            var bodyChunks = [];
+            response.on('data', function(chunk) {
+              console.log('chunk revieved\n');
+              bodyChunks.push(chunk);
+            }).on('end', function() {
+                var body = JSON.parse(Buffer.concat(bodyChunks));
+                console.log("Server response", body);
+                if (body && body.access_token && body.user_id == user.vk_user_id) {
+                  user.vk_token = body.access_token;
+                  user.save(function(err, user) {
+                    if (err) {
+                      console.log(err);
+                      res.redirect("/");
+                    } else {
+                      req.session.user = user;
+                      res.locals.current_user = user;
+                      res.redirect("/personal");
+                    }
+                  });
+                } else {
+                  res.redirect("/");
+                }
+              })
+          });
+          request.on('socket', function(socket) {
+            socket.setTimeout(30000);
+            socket.on('timeout', function() {
+              console.log('Преывшен таймаут в 30 секунд для GET-запроса');
+              request.abort();
+            });
+          });
+          request.on('error', function(e) {
+            callback(e, null)
+          });
+        } else {
+          res.redirect("/");
+        }
+      } else {
+        res.redirect("/");
+      }
+    });
+  } else {
+    res.redirect("/");
+  }
 });
 
 module.exports = router;

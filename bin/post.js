@@ -1,6 +1,7 @@
 var mongoose = require('mongoose'),
     Source = mongoose.model('Source'),
     Group = mongoose.model('Group'),
+    User = mongoose.model('User'),
     Post = mongoose.model('Post'),
     PostImage = mongoose.model('PostImage'),
     vk = require('../bin/vk'),
@@ -159,86 +160,92 @@ exports.doPost = function(filter, doAfterPost) {
     filter,
     function(err, post) {
       if (post) {
-        console.log("Post exists", "\n");
-        vk.getImageUploadUrl(function(err, image_upload_url) {
-          if (err) {
-            console.log(err);
-            doAfterPost(err);
-          } else {
-            console.log("Image upload url", image_upload_url, "\n");
-            vk.getDocUploadUrl(function(err, doc_upload_url) {
+        console.log("Post exists", post, "\n");
+        User.findOne({_id: post.user, is_active: true}, function(err, user) {
+          if (user) {
+            vk.getImageUploadUrl(user, function(err, image_upload_url) {
               if (err) {
                 console.log(err);
-                doAfterPost(err)
+                doAfterPost(err);
               } else {
-                console.log("File upload url", doc_upload_url, "\n");
-                PostImage.find({post: post._id}, function(err, images) {
-                  var saveImage = [];
-                  async.forEach(images, function(image, callback) {
-                    //добавляем функцию сохранения изображения
-                    saveImage.push(function(saveImageCallback) {
-                      setTimeout(function() {
-                        if (image.type == 'document') {
-                          vk.uploadDoc(image, doc_upload_url, function(vk_res) {
-                            vk.saveDoc(vk_res, function(response) {
-                              if (response.error) {
-                                saveImageCallback(response.error);
-                              } else {
-                                console.log(response);
-                                response[0].id = 'doc' + response[0].owner_id + "_" + response[0].did;
-                                saveImageCallback(null, response);
-                              }
-                            });
-                          });
-                        } else {
-                          vk.uploadImage(image, image_upload_url, function(vk_res) {
-                            console.log("vk.uploadImage function response ", vk_res);
-                            vk.saveImage(JSON.parse(vk_res), function(response) {
-                              console.log("vk.saveImage function response ", response);
-                              if (response.error) {
-                                saveImageCallback(response.error);
-                              } else {
-                                saveImageCallback(null, response);
-                              }
-                            });
-                          });
-                        }
-                        console.log("Файл отправлен в ВК", "\n");
-                      }, 1000);
-                    });
-                    callback();
-                  }, function(err) {
-                    async.series(
-                      saveImage,
-                      function(err, results) {
-                        if (err) {
-                          console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
-                          doAfterPost(err);
-                        } else {
-                          console.log('Будут сохранены следущюие данные', results, "\n");
-                          if (results) {
-                            vk.wallPost(post, results, function(postSaved) {
-                              console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
-                              if (typeof postSaved.response != 'undefined') {
-                                console.log("Отмечаем пост как отправленный", post);
-                                post.posted = true;
-                                post.save(function(err, post) {
-                                  doAfterPost();
+                console.log("Image upload url", image_upload_url, "\n");
+                vk.getDocUploadUrl(user, function(err, doc_upload_url) {
+                  if (err) {
+                    console.log(err);
+                    doAfterPost(err)
+                  } else {
+                    console.log("File upload url", doc_upload_url, "\n");
+                    PostImage.find({post: post._id}, function(err, images) {
+                      var saveImage = [];
+                      async.forEach(images, function(image, callback) {
+                        //добавляем функцию сохранения изображения
+                        saveImage.push(function(saveImageCallback) {
+                          setTimeout(function() {
+                            if (image.type == 'document') {
+                              vk.uploadDoc(image, doc_upload_url, function(vk_res) {
+                                vk.saveDoc(user, vk_res, function(response) {
+                                  if (response.error) {
+                                    saveImageCallback(response.error);
+                                  } else {
+                                    console.log(response);
+                                    response[0].id = 'doc' + response[0].owner_id + "_" + response[0].did;
+                                    saveImageCallback(null, response);
+                                  }
+                                });
+                              });
+                            } else {
+                              vk.uploadImage(image, image_upload_url, function(vk_res) {
+                                console.log("vk.uploadImage function response ", vk_res);
+                                vk.saveImage(user, JSON.parse(vk_res), function(response) {
+                                  console.log("vk.saveImage function response ", response);
+                                  if (response.error) {
+                                    saveImageCallback(response.error);
+                                  } else {
+                                    saveImageCallback(null, response);
+                                  }
+                                });
+                              });
+                            }
+                            console.log("Файл отправлен в ВК", "\n");
+                          }, 1000);
+                        });
+                        callback();
+                      }, function(err) {
+                        async.series(
+                          saveImage,
+                          function(err, results) {
+                            if (err) {
+                              console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
+                              doAfterPost(err);
+                            } else {
+                              console.log('Будут сохранены следущюие данные', results, "\n");
+                              if (results) {
+                                vk.wallPost(post, results, function(postSaved) {
+                                  console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
+                                  if (typeof postSaved.response != 'undefined') {
+                                    console.log("Отмечаем пост как отправленный", post);
+                                    post.posted = true;
+                                    post.save(function(err, post) {
+                                      doAfterPost();
+                                    });
+                                  } else {
+                                    doAfterPost(postSaved);
+                                  }
                                 });
                               } else {
-                                doAfterPost(postSaved);
+                                doAfterPost({error: 'empty posts list'});
                               }
-                            });
-                          } else {
-                            doAfterPost({error: 'empty posts list'});
+                            }
                           }
-                        }
-                      }
-                    );
-                  });
+                        );
+                      });
+                    });
+                  }
                 });
               }
             });
+          } else {
+            doAfterPost({error: "Нет такого пользователя"});
           }
         });
       } else {

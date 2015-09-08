@@ -75,7 +75,7 @@ block content
         )
       div.col-sm-2
         a(
-        href=config.getAuthUrl()
+        href=config.getAuthUrl(current_user._id)
         ) Получить токен доступа
     div.form-group
       div.col-sm-2

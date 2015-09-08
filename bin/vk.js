@@ -46,10 +46,11 @@ getRequest = function(getOptions, method, callback) {
   });
 };
 
-getUploadUrl = function(type, callback) {
+getUploadUrl = function(type, user, callback) {
+  console.log(user);
   var getOptions = [
-    'user_id=' + config.get("vk.user_id"),
-    'access_token=' + config.get("vk.access_token")
+    'user_id=' + user.vk_user_id,
+    'access_token=' + user.vk_token
   ];
   var method = 'photos.getWallUploadServer';
   if (type != 'image') {
@@ -65,12 +66,12 @@ getUploadUrl = function(type, callback) {
   });
 };
 
-exports.getImageUploadUrl = function(callback) {
-  getUploadUrl('image', callback);
+exports.getImageUploadUrl = function(user, callback) {
+  getUploadUrl('image', user, callback);
 };
 
-exports.getDocUploadUrl = function(callback) {
-  getUploadUrl('doc', callback);
+exports.getDocUploadUrl = function(user, callback) {
+  getUploadUrl('doc', user, callback);
 };
 
 uploadFile = function(type, image, upload_url, callback) {
@@ -116,17 +117,17 @@ exports.uploadDoc = function(image, upload_url, callback) {
   uploadFile('file', image, upload_url, callback);
 };
 
-exports.saveImage = function(response, callback) {
+exports.saveImage = function(user, response, callback) {
   if (response) {
     var getOptions = [
-      'user_id=' + config.get("vk.user_id"),
-      'access_token=' + config.get("vk.access_token"),
+      'user_id=' + user.vk_user_id,
+      'access_token=' + user.vk_token,
       'photo=' + response.photo,
       'server=' + response.server,
       'hash=' + response.hash
     ];
     getRequest(getOptions, 'photos.saveWallPhoto', function(err, res) {
-      if (res.response) {
+      if (res && res.response) {
         callback(res.response);
       } else {
         console.log(err);
@@ -142,11 +143,11 @@ exports.saveImage = function(response, callback) {
   }
 };
 
-exports.saveDoc = function(response, callback) {
+exports.saveDoc = function(user, response, callback) {
   if (response) {
     var getOptions = [
-      'user_id=' + config.get("vk.user_id"),
-      'access_token=' + config.get("vk.access_token"),
+      'user_id=' + user.vk_user_id,
+      'access_token=' + user.vk_token,
       'file=' + response.file
     ];
     getRequest(getOptions, 'docs.save', function(err, res) {
