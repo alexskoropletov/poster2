@@ -8,7 +8,7 @@ var User = new Schema({
   login: {type: String, index: { unique: true }},
   password: String,
   email: {type: String, index: { unique: true }},
-  vk_user_id: {type: String, index: { unique: true }},
+  vk_id: {type: String, index: { unique: true }},
   vk_token: String,
   role: {type: String, enum: ['admin','user']},
   updated_at: Date

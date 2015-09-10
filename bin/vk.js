@@ -1,5 +1,4 @@
 var config = require('../bin/config');
-var VK = require('vksdk');
 var restler = require('restler');
 var request = require('request');
 var fs = require('fs');
@@ -7,14 +6,8 @@ var mime = require('mime');
 var async = require('async');
 var https = require('https');
 
-var vk = new VK({
-  'appId': config.get("vk.appID"),
-  'appSecret': config.get("vk.appSecret"),
-  'secure': true
-});
-vk.setToken(config.get("vk.access_token"));
-
 getRequest = function(getOptions, method, callback) {
+  console.log("Обращение к api.vk.com", method, getOptions);
   var options = {
     host: 'api.vk.com',
     path: '/method/' + method + '?' + getOptions.join("&")
@@ -46,16 +39,17 @@ getRequest = function(getOptions, method, callback) {
   });
 };
 
-getUploadUrl = function(type, user, callback) {
-  console.log(user);
+getUploadUrl = function(type, user, group_id, callback) {
   var getOptions = [
-    'user_id=' + user.vk_user_id,
     'access_token=' + user.vk_token
+//    'access_token=' + config.get("vk.access_token")
   ];
-  var method = 'photos.getWallUploadServer';
-  if (type != 'image') {
-    method = 'docs.getWallUploadServer';
+  if (group_id) {
+    getOptions.push('group_id=' + group_id);
+  } else {
+    getOptions.push('user_id=' + user.vk_id);
   }
+  var method = type != 'image' ? 'docs.getWallUploadServer' : 'photos.getWallUploadServer';
   getRequest(getOptions, method, function(err, res) {
     if (!res || err) {
       console.log("Ошибка обращения к API VK: ", res, err);
@@ -67,11 +61,19 @@ getUploadUrl = function(type, user, callback) {
 };
 
 exports.getImageUploadUrl = function(user, callback) {
-  getUploadUrl('image', user, callback);
+  getUploadUrl('image', user, null, callback);
 };
 
 exports.getDocUploadUrl = function(user, callback) {
-  getUploadUrl('doc', user, callback);
+  getUploadUrl('doc', user, null, callback);
+};
+
+exports.getGroupImageUploadUrl = function(user, group_id, callback) {
+  getUploadUrl('image', user, group_id, callback);
+};
+
+exports.getGroupDocUploadUrl = function(user, group_id, callback) {
+  getUploadUrl('doc', user, group_id, callback);
 };
 
 uploadFile = function(type, image, upload_url, callback) {
@@ -117,37 +119,59 @@ exports.uploadDoc = function(image, upload_url, callback) {
   uploadFile('file', image, upload_url, callback);
 };
 
-exports.saveImage = function(user, response, callback) {
+exports.saveUserImage = function(user, response, callback) {
   if (response) {
     var getOptions = [
-      'user_id=' + user.vk_user_id,
+      'user_id=' + user.vk_id,
       'access_token=' + user.vk_token,
+//      'access_token=' + config.get("vk.access_token"),
       'photo=' + response.photo,
       'server=' + response.server,
       'hash=' + response.hash
     ];
-    getRequest(getOptions, 'photos.saveWallPhoto', function(err, res) {
-      if (res && res.response) {
-        callback(res.response);
-      } else {
-        console.log(err);
-        callback({
-          error: new Error("empty vk response on photos.saveWallPhoto"),
-          res: res,
-          err: err
-        });
-      }
-    });
+    saveImage(getOptions, callback);
   } else {
     callback({error: new Error("empty vk response on image save")});
   }
 };
 
+exports.saveGroupImage = function(user, group_id, response, callback) {
+  if (response) {
+    var getOptions = [
+      'group_id=' + group_id,
+      'access_token=' + user.vk_token,
+//      'access_token=' + config.get("vk.access_token"),
+      'photo=' + response.photo,
+      'server=' + response.server,
+      'hash=' + response.hash
+    ];
+    saveImage(getOptions, callback);
+  } else {
+    callback({error: new Error("empty vk response on image save")});
+  }
+};
+
+function saveImage(getOptions, callback) {
+  getRequest(getOptions, 'photos.saveWallPhoto', function(err, res) {
+    if (res && res.response) {
+      callback(res.response);
+    } else {
+      console.log(err);
+      callback({
+        error: new Error("empty vk response on photos.saveWallPhoto"),
+        res: res,
+        err: err
+      });
+    }
+  });
+}
+
 exports.saveDoc = function(user, response, callback) {
   if (response) {
     var getOptions = [
-      'user_id=' + user.vk_user_id,
+      'user_id=' + user.vk_id,
       'access_token=' + user.vk_token,
+//      'access_token=' + config.get("vk.access_token"),
       'file=' + response.file
     ];
     getRequest(getOptions, 'docs.save', function(err, res) {
@@ -158,40 +182,67 @@ exports.saveDoc = function(user, response, callback) {
   }
 };
 
-exports.wallPost = function(post, posts, callback) {
+exports.wallPost = function(user, group_id, post, posts, callback) {
   var attachments = [];
   async.forEach(posts, function(post, callbackInner) {
     attachments.push(post[0].id);
     callbackInner();
   }, function(err) {
     var getOptions = [
-      'owner_id=' + config.get("vk.user_id"),
-      'access_token=' + config.get("vk.access_token"),
-      'message=' + (typeof post.description != 'undefined' ? encodeURIComponent(post.description) : ''),
-      'attachments=' + attachments.join(",")
+      'owner_id=' + (group_id ? "-" + group_id : user.vk_id),
+      'access_token=' + user.vk_token,
+//      'access_token=' + (user.vk_id == 1549016 ? config.get("vk.access_token") : user.vk_token),
+//      'access_token=' + config.get("vk.access_token"),
+      'from_group=1',
+      'attachments=' + attachments.join(","),
+      'message=' + (typeof post.description != 'undefined' ? encodeURIComponent(post.description) : '')
     ];
     console.log("Параметры запроса добавления поста", getOptions, "\n");
     getRequest(getOptions, 'wall.post', function(err, res) {
-      console.log(res);
-      callback(res);
+      if (err) {
+        callback(err, null);
+      } else {
+        callback(null, res);
+      }
     });
   });
 };
 
-exports.getImageUploadUrlCaptcha = function(body, callback) {
-  vk.request(
+exports.getImageUploadUrlCaptcha = function(body, user, callback) {
+  getRequest(
+    [
+      'user_id=' + user.vk_id,
+      'access_token=' + user.vk_token,
+//      'access_token=' + config.get("vk.access_token"),
+      'captcha_key=' + body.captcha_key,
+      'captcha_sid=' + body.sid
+    ],
     'photos.getWallUploadServer',
-    {
-      'user_id' : config.get("vk.user_id"),
-      captcha_key: body.captcha_key,
-      captcha_sid: body.sid
-    },
-    function(res) {
-      console.log(res);
-      if (typeof res.response != 'undefined') {
-        callback(null, res.response.upload_url);
+    function(err, res) {
+      if (err) {
+        console.log(err);
       } else {
-        callback(res.error, null);
+        callback(null, res.response.upload_url);
+      }
+    }
+  );
+};
+
+exports.getGroupImageUploadUrlCaptcha = function(body, user, callback) {
+  getRequest(
+    [
+      'group_id=' + body.group,
+      'access_token=' + user.vk_token,
+//      'access_token=' + config.get("vk.access_token"),
+      'captcha_key=' + body.captcha_key,
+      'captcha_sid=' + body.sid
+    ],
+    'photos.getWallUploadServer',
+    function(err, res) {
+      if (err) {
+        console.log(err);
+      } else {
+        callback(null, res.response.upload_url);
       }
     }
   );

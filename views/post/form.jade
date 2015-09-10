@@ -77,6 +77,19 @@ div.form-group
     value=post.description
     )
 div.form-group
+  label.col-sm-1.control-label(
+  for="inputGroup"
+  ) Группа
+  div.col-sm-10
+    select.form-control(name="group", autocomplete="off")
+      option(value="") Моя страница
+      if groups.length
+        each val in groups
+          if JSON.stringify(val._id) == JSON.stringify(post.group)
+            option(value=val._id, selected="selected")= val.name
+          else
+            option(value=val._id)= val.name
+div.form-group
   div.col-sm-offset-1.col-sm-10
     button.btn.btn-default(
     type="submit"

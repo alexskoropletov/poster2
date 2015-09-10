@@ -15,12 +15,13 @@
     "cookie-parser": "~1.3.5",
     "cron": "^1.0.9",
     "debug": "~2.2.0",
+    "ejs": "^1.0.0",
     "eonasdan-bootstrap-datetimepicker": "*",
     "express": "~4.13.1",
     "express-session": "^1.7.6",
-    "ejs": "^1.0.0",
     "jade": "~1.11.0",
     "mime": "*",
+    "moment-timezone": "^0.4.0",
     "mongodb": "*",
     "mongoose": "3.8.1",
     "morgan": "~1.6.1",
@@ -32,7 +33,6 @@
     "restler": "*",
     "serve-favicon": "~2.3.0",
     "tumblr": "*",
-    "tumblr.js": "*",
-    "vksdk": "*"
+    "tumblr.js": "*"
   }
 }

@@ -56,7 +56,7 @@ exports.parseBlog = function(complete) {
                             console.log("Ошибка 2", err);
                           }
                           //добавляем пост в очередь
-                          Post.find({}).sort({"when": -1}).limit(1).exec(function(err, latest_post) {
+                          Post.find({user: user._id}).sort({"when": -1}).limit(1).exec(function(err, latest_post) {
                             var nextWhen = Date.now();
                             if (typeof latest_post[0] != 'undefined') {
                               latest_post[0].when.getTime()

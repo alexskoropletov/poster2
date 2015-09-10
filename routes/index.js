@@ -4,14 +4,18 @@ var express = require('express'),
   User = mongoose.model('User'),
   config = require('../bin/config'),
   https = require('https'),
+  moment = require('moment'),
+  tz = require('moment-timezone'),
   async = require('async');
 
 router.all('*', function(req, res, next) {
   res.locals.title = config.get('common.title');
   res.locals.config = config;
+  res.locals.moment = moment;
+  res.locals.tz = tz;
   res.locals.current_user = req.session.user || {};
   console.log(req.url);
-  if (req.url.indexOf("/vk_code") < 0 && req.url != "/users/logout" && req.url != "/personal" && req.session.user && (!req.session.user.vk_user_id || !req.session.user.vk_token)) {
+  if (req.url.indexOf("/vk_code") < 0 && req.url != "/users/logout" && req.url != "/personal" && req.session.user && (!req.session.user.vk_id || !req.session.user.vk_token)) {
     res.render(
       'common/personal',
       {
@@ -47,7 +51,7 @@ router.post('/personal', function (req, res) {
   var required = {
     login: "Поле 'Логин' обязательно для заполнения",
     email: "Поле 'E-mail' обязательно для заполнения",
-    vk_user_id: "Поле 'Id в VK' обязательно для заполнения"
+    vk_id: "Поле 'Id в VK' обязательно для заполнения"
   };
   var error = [];
   async.forEachOf(req.body, function(val, key, callback) {
@@ -123,6 +127,7 @@ router.get("/vk_code/:user_id", function(req, res) {
             "client_id=" + config.get('vk.appID'),
             "client_secret=" + config.get('vk.appSecret'),
             "code=" + req.query.code,
+            "scope=friends,groups,photos,audio,video,docs,wall,offline",
             "redirect_uri=" + encodeURIComponent("http://wizee.ninja/vk_code/" + req.params.user_id)
           ];
           var options = {
@@ -138,7 +143,7 @@ router.get("/vk_code/:user_id", function(req, res) {
             }).on('end', function() {
                 var body = JSON.parse(Buffer.concat(bodyChunks));
                 console.log("Server response", body);
-                if (body && body.access_token && body.user_id == user.vk_user_id) {
+                if (body && body.access_token && body.user_id == user.vk_id) {
                   user.vk_token = body.access_token;
                   user.save(function(err, user) {
                     if (err) {

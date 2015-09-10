@@ -1,0 +1,26 @@
+form.form-inline
+  div.form-group
+    select.form-control(
+    name="failed"
+    )
+      option(value='false') Не показывать не отправденные посты
+      option(value='true') Показывать не отправденные посты
+      option(value='') Показывать все посты
+  div.form-group
+    select.form-control(
+    name="posted"
+    )
+      option(value='false') Не показывать опубликованные посты
+      option(value='true') Показывать опубликованные посты
+      option(value='') Показывать все посты
+  div.form-group
+    div.input-group.date(id='datetimepicker2')
+      input.form-control(
+      type='text'
+      name="from_date"
+      data-date=moment().tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
+      value=moment().tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
+      )
+      span.input-group-addon
+        span.glyphicon.glyphicon-calendar
+  button.btn.btn-default(type="submit") Фильтровать

@@ -53,30 +53,45 @@ block content
       div.col-sm-2
         label.col-sm-2.control-label(for="inputName") Id&nbsp;в&nbsp;VK
       div.col-sm-2
-        label.col-sm-2.control-label(for="inputEmail") Токен
+        label.col-sm-2.control-label(for="inputVkToken") Токен
+      div.col-sm-2
+        label.col-sm-2.control-label(for="inputVkCode") Код для токена
     div.form-group
       div.col-sm-2
         input.form-control(
         type="text"
-        name="vk_user_id"
+        name="vk_id"
         id="inputVkUserId"
         placeholder="Id пользователя в VK"
-        value=current_user.vk_user_id
+        value=current_user.vk_id
         autocomplete="off"
         )
       div.col-sm-2
         input.form-control(
         type="text"
         name="vk_token"
-        readonly="readonly"
         id="inputVkToken"
         placeholder="Токен доступа"
         value=current_user.vk_token
         )
       div.col-sm-2
+        input.form-control(
+        type="text"
+        name="vk_code"
+        id="inputVkCode"
+        placeholder="Код доступа"
+        value=current_user.vk_code
+        )
+      div.col-sm-4
         a(
-        href=config.getAuthUrl(current_user._id)
-        ) Получить токен доступа
+        target="_blank"
+        href=config.getCodeUrl(current_user._id)
+        ) Получить код для токена доступа
+        if current_user.vk_code
+          a(
+          target="_blank"
+          href=config.getTokenUrl(current_user)
+          ) Получить токен доступа
     div.form-group
       div.col-sm-2
         button.btn.btn-default(

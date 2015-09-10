@@ -13,24 +13,29 @@ var corovanJob = new CronJob({
   timeZone: 'Europe/Moscow'
 });
 
-//var postJob = new CronJob({
-//  cronTime: '00 * * * * *',
-//  onTick: function() {
-//    var thisMinute = new Date();
-//    var filter = {
-//      posted: false,
-//      when: {
-//        "$gt": thisMinute,
-//        "$lte": new Date(thisMinute.getTime() + 60 * 1000)
-//      }
-//    };
-//    poster2.doPost(filter, function() {
-//      console.log('posted');
-//    });
-//  },
-//  start: true,
-//  timeZone: 'Europe/Moscow'
-//});
+var postJob = new CronJob({
+  cronTime: '00 * * * * *',
+  onTick: function() {
+    var thisMinute = new Date();
+    var filter = {
+      posted: false,
+      approved: true,
+      when: {
+        "$gt": thisMinute,
+        "$lte": new Date(thisMinute.getTime() + 60 * 1000)
+      }
+    };
+    poster2.doPost(filter, function(err) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log('posted');
+      }
+    });
+  },
+  start: true,
+  timeZone: 'Europe/Moscow'
+});
 //
 //var catchUpJob = new CronJob({
 //  cronTime: '00 */15 * * * *',
@@ -55,6 +60,6 @@ var corovanJob = new CronJob({
 //});
 
 exports.corovanJob = corovanJob;
+exports.postJob = postJob;
 //exports.scheduleJob = scheduleJob;
-//exports.postJob = postJob;
 //exports.catchUpJob = catchUpJob;

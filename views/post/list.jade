@@ -1,5 +1,6 @@
 extends ../layout
 block content
+  include filter
   if posts.length
     include paginate
     table.table
@@ -7,7 +8,9 @@ block content
         tr
           th Когда
           th Группа
-          th Пост одобрен
+          th Одобрен
+          th Опубликован
+          th Ошибка
           th Текст
           th Файлы
           th -
@@ -16,7 +19,7 @@ block content
       tbody
         each val in posts
           tr(id="postid" + val._id)
-            td(scope="row")= new Date(val.when.getTime() + 60 * 60 * 1000).getFullYear() +"/"+("0" + (new Date(val.when.getTime() + 60 * 60 * 1000).getMonth()+1)).slice(-2) +"/"+("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getDate()).slice(-2) + "\n" +("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getHours()).slice(-2) + ":" +("0" + new Date(val.when.getTime() + 60 * 60 * 1000).getMinutes()).slice(-2)
+            td(scope="row")= moment(val.when).tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
             td
               if val.group
                 each group in groups
@@ -30,6 +33,14 @@ block content
                   include ../common/item_active
                 else
                   include ../common/item_inactive
+            td
+              if val.posted
+                Опубликован
+              else
+                Не опубликован
+            td
+              if val.failed
+                Не отправлен
             td= val.description
             td
               each image in postImages[val._id]
