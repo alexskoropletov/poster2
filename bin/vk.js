@@ -42,14 +42,22 @@ getRequest = function(getOptions, method, callback) {
 getUploadUrl = function(type, user, group_id, callback) {
   var getOptions = [
     'access_token=' + user.vk_token
-//    'access_token=' + config.get("vk.access_token")
   ];
-  if (group_id) {
-    getOptions.push('group_id=' + group_id);
+
+  if (type != 'image') {
+    if (!group_id) {
+      getOptions.push('user_id=' + user.vk_id);
+    }
+    var method = 'docs.getWallUploadServer';
   } else {
-    getOptions.push('user_id=' + user.vk_id);
+    if (group_id) {
+      getOptions.push('group_id=' + group_id);
+    } else {
+      getOptions.push('user_id=' + user.vk_id);
+    }
+    var method = 'photos.getWallUploadServer';
   }
-  var method = type != 'image' ? 'docs.getWallUploadServer' : 'photos.getWallUploadServer';
+
   getRequest(getOptions, method, function(err, res) {
     if (!res || err) {
       console.log("Ошибка обращения к API VK: ", res, err);

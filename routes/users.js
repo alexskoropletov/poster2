@@ -41,6 +41,7 @@ router.get('/register', function (req, res) {
 });
 router.post('/register', function(req, res) {
   var message = '';
+  console.log(req.body);
   for (var k in req.body) {
     if (!req.body[k].trim()) {
       message = 'Ошибка. Все поля должны быть заполнены';
@@ -51,8 +52,8 @@ router.post('/register', function(req, res) {
   } else {
     User.findOne(
       {$or:[
-          {login: req.body.login},
-          {email: req.body.email}
+        {login: req.body.login},
+        {email: req.body.email}
       ]}, function(err, user) {
       if (user) {
         res.render('user/register', {subtitle: 'Регистрация', message: 'Ошибка. Такой логин и/или E-mail уже используются.'});
@@ -66,7 +67,12 @@ router.post('/register', function(req, res) {
             password: hash,
             role: 'user'
           }).save(function(err, user, count) {
-              res.render('user/success', {subtitle: 'Регистрация'});
+              if (err) {
+                console.log(err);
+                res.render('user/register', {subtitle: 'Регистрация', message: 'Ошибка создания пользователя'});
+              } else {
+                res.render('user/success', {subtitle: 'Регистрация'});
+              }
             });
         });
       }
