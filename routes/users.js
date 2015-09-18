@@ -36,6 +36,15 @@ router.get('/edit/:id', function (req, res) {
   });
 });
 
+router.get('/loginas/:id', function (req, res) {
+  User.findOne({_id: req.params.id}, function(err, user) {
+    if (user) {
+      req.session.user = user;
+    }
+    res.redirect('/post/');
+  });
+});
+
 router.get('/register', function (req, res) {
   res.render('user/register', {subtitle: 'Регистрация', message: ''});
 });

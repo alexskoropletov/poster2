@@ -45,7 +45,7 @@ block content
             td
               each image in postImages[val._id]
                 a(href=image.image_url, target='_blank')
-                  img(src=image.image_preview_url)
+                  img.max250(src=image.image_preview_url)
             td
               a(href="/post/do_post/" + val._id)
                 span.glyphicon.glyphicon-star-empty(aria-hidden="true")

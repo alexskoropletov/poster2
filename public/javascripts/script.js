@@ -13,7 +13,15 @@ $(function() {
   $('#datetimepicker2').datetimepicker({
     format: 'YYYY-MM-DD HH:mm',
     locale: 'ru',
+    sideBySide: true,
     date: new Date($('#inputWhen').data('date'))
+  });
+  console.log($("#filter_from_date").val());
+  $('#filter_from_date').datetimepicker({
+    format: 'YYYY-MM-DD HH:mm',
+    locale: 'ru',
+    sideBySide: true,
+    date: $("#filter_from_date").val()
   });
   $(".delete_link").click(function() {
     var id = "#postid" + $(this).data('post');
@@ -26,17 +34,16 @@ $(function() {
     }, 'json');
     return false;
   });
+  $(".post_approved").click(function() {
+    var self = this;
+    $.post("/post/approve", {id: $(this).data('id')}, function(data) {
+      $(self).html(data);
+    });
+  });
   //users
   $(".user_active").click(function() {
     var self = this;
     $.post("/users/active", {id: $(this).data('id')}, function(data) {
-      $(self).html(data);
-    });
-  });
-  //posts
-  $(".post_approved").click(function() {
-    var self = this;
-    $.post("/post/approve", {id: $(this).data('id')}, function(data) {
       $(self).html(data);
     });
   });

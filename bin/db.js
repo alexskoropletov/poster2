@@ -10,6 +10,9 @@ var User = new Schema({
   email: {type: String, index: { unique: true }},
   vk_id: {type: String, index: { unique: true }},
   vk_token: String,
+  post_interval: String,
+  post_hours: String,
+  post_random: {type: String, default: 0},
   role: {type: String, enum: ['admin','user']},
   updated_at: Date
 });
@@ -20,6 +23,9 @@ var Group = new Schema({
   name: String,
   vk_id: String,
   url: String,
+  post_interval: String,
+  post_hours: String,
+  post_random: {type: String, default: 0},
   updated_at: Date
 });
 

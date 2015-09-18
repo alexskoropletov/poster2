@@ -113,10 +113,17 @@ router.get('/page:page', function (req, res) {
     );
   });
 });
+/* работа с постами */
+router.get('/', function (req, res) {
+  res.redirect("/post/page1");
+});
 
 /* форма добавления */
 router.get('/add', function (req, res) {
   Post.findOne({posted: false, user: req.session.user._id}).sort({when: -1}).exec(function(err, post) {
+    if (!post) {
+      post = {when: new Date()};
+    }
     Group.find({user: req.session.user._id}, function(err, groups) {
       res.render(
         'post/add',
@@ -137,26 +144,40 @@ router.post('/save', function (req, res) {
     new Post({
       user: req.session.user._id,
       when: Date.parse(req.body.when),
-      group: req.body.group,
+      group: req.body.group || null,
       description: req.body.description
     }).save(function(err, post, count) {
-        if (req.body['imageUrl[]'].constructor !== Array) {
-          req.body['imageUrl[]'] = [req.body['imageUrl[]']];
-          req.body['imageType[]'] = [req.body['imageType[]']];
+        if (err) {
+          console.log("Ошибка сохранения нового поста", err);
+          res.redirect('/post/add');
+        } else {
+          if (req.body['imageUrl[]'].constructor !== Array) {
+            req.body['imageUrl[]'] = [req.body['imageUrl[]']];
+            req.body['imageType[]'] = [req.body['imageType[]']];
+          }
+          async.forEachOf(req.body['imageUrl[]'], function (val, key, callback){
+            new PostImage({
+              image_url: val,
+              image_preview_url: val,
+              type: req.body['imageType[]'][key],
+              post: post._id
+            }).save(function (err, postImage, count) {
+                callback();
+              });
+          }, function(err) {
+            res.redirect('/post/page1');
+          });
         }
-        async.forEachOf(req.body['imageUrl[]'], function (val, key, callback){
-          new PostImage({
-            image_url: val,
-            image_preview_url: val,
-            type: req.body['imageType[]'][key],
-            post: post._id
-          }).save(function (err, postImage, count) {
-              callback();
-            });
-        }, function(err) {
-          res.redirect('/post/page1');
-        });
       });
+  } else {
+    new Post({
+      user: req.session.user._id,
+      when: Date.parse(req.body.when),
+      group: req.body.group || null,
+      description: req.body.description
+    }).save(function(err, post, count) {
+      res.redirect('/post/page1');
+    });
   }
 });
 
@@ -242,9 +263,12 @@ router.get('/fix', function (req, res) {
 });
 
 router.get('/schedule', function (req, res) {
-  poster2.addPostTime(Date.now(), req.session.user._id, function() {
+  poster2.schedule(req.session.user, function() {
     res.redirect("/post/page1");
   });
+//  poster2.addPostTime(Date.now(), req.session.user, function() {
+//    res.redirect("/post/page1");
+//  });
 });
 
 router.get('/catchup', function (req, res) {

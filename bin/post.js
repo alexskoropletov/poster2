@@ -7,6 +7,7 @@ var mongoose = require('mongoose'),
     vk = require('../bin/vk'),
     config = require('../bin/config'),
     moment = require('moment'),
+    tz = require('moment-timezone'),
     async = require('async');
 
 exports.compressTime = function(user, compressCallback) {
@@ -56,40 +57,89 @@ exports.fix = function(user, callback) {
     });
 };
 
+exports.schedule = function(user, scheduled) {
+  Group.find({user: user._id}, function (err, groups) {
+    groups.push({});
+    async.forEach(groups, function(group, groupsCallback) {
+      Post.find(
+        {
+          user: user._id,
+          group: group._id,
+          posted: false,
+          when: {
+            "$gt": new Date()
+          }
+        },
+        function(err, posts) {
+          var postTimeCalls = [];
+          async.forEach(posts, function(post, callback) {
+            postTimeCalls.push(function(postSaved) {
+              Post.findOne({user: user._id, posted: false, group: group._id}).sort({"when": -1}).exec(function(err, latest_post) {
+                config.getNextPostTime(user, group, latest_post, function(nextWhen) {
+                  post.when = nextWhen;
+                  post.save(function(err, post) {
+                    postSaved();
+                  });
+                });
+              });
+            });
+            callback();
+          }, function(err) {
+            async.series(
+              postTimeCalls,
+              function(err, result) {
+                groupsCallback();
+              }
+            );
+          });
+        }
+      );
+    }, function(err) {
+      scheduled();
+    });
+  });
+};
+
 function addPostTime(date, user, end) {
   Post.findOne(
     {
-      user: user,
+      user: user._id,
       posted: false,
       when: {
         "$gt": new Date(date)
       }
     }
   ).sort({"when": 1}).exec(function (err, startpost) {
-      if (startpost) {
-        Post.find(
-          {
-            user: user,
-            posted: false,
-            when: {
-              "$gt": new Date(startpost.when.getTime()),
-              "$lte": new Date(startpost.when.getTime() + config.get("post.distance"))
-            }
+      console.log(startpost);
+    if (startpost) {
+      Post.find(
+        {
+          user: user._id,
+          posted: false,
+          when: {
+            "$gt": new Date(startpost.when.getTime()),
+            "$lte": new Date(startpost.when.getTime() + config.get("post.distance"))
           }
-        ).sort({"when": 1}).exec(function(err, posts) {
-            async.forEach(posts, function(post, callback) {
-              post.when = new Date(post.when.getTime() + config.get("post.distance") + config.random());
-              post.save(function(err, post) {
-                callback();
+        }
+      ).sort({"when": 1}).exec(function(err, posts) {
+          async.forEach(posts, function(post, callback) {
+            console.log("Группа поста", post);
+            Group.findOne({_id: post.group}, function(err, group) {
+              config.getNextPostTime(user, group, post, function(nextWhen) {
+                post.when = nextWhen;
+                post.save(function(err, post) {
+                  callback();
+                });
               });
-            }, function(err) {
-              addPostTime(startpost.when.getTime() + config.get("post.distance"), user, end);
             });
+          }, function(err) {
+            addPostTime(startpost.when.getTime() + config.get("post.distance"), user, end);
           });
-      } else {
-        end();
-      }
-    });
+        });
+    } else {
+      end();
+    }
+  });
 }
 
 exports.addPostTime = addPostTime;
@@ -98,17 +148,19 @@ exports.getMainPage = function(req, showList) {
   var postImages = {};
   var filter = {
     when: {
-      "$gt": req.query.from_date ? moment(req.query.from_date) : new Date()
+      "$gt": req.query.from_date ? moment(req.query.from_date).tz('Europe/Moscow') : moment().tz('Europe/Moscow')
     },
     user: req.session.user._id
   };
+  if (req.query.group) {
+    filter.group = req.query.group == 'null' ? null : req.query.group;
+  }
   if (req.query.posted) {
-    filter.posted = req.query.posted == 'true' ? true : false;
+    filter.posted = req.query.posted == 'true';
   }
   if (req.query.failed) {
-    filter.failed = req.query.failed == 'true' ? true : false;
+    filter.failed = req.query.failed == 'true';
   }
-  console.log("List page filter", filter);
   Post.count(filter, function(err, count) {
     var per_page = 50;
     var skip = (req.params.page- 1) * per_page > count ? 0 : (req.params.page - 1) * per_page;
@@ -132,7 +184,8 @@ exports.getMainPage = function(req, showList) {
               postImages: postImages,
               pages: pages,
               groups: groups,
-              current_page: req.params.page
+              current_page: req.params.page,
+              filter: filter
             }
           );
         });

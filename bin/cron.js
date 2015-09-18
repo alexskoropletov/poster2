@@ -1,6 +1,9 @@
 var CronJob = require('cron').CronJob,
-    tumblr = require('./tumblr'),
-    poster2 = require('./post');
+  tumblr = require('./tumblr'),
+  poster2 = require('./post'),
+  async = require('async')
+  mongoose = require('mongoose'),
+  User = mongoose.model('User');
 
 var corovanJob = new CronJob({
   cronTime: '00 */10 * * * *',
@@ -36,18 +39,24 @@ var postJob = new CronJob({
   start: true,
   timeZone: 'Europe/Moscow'
 });
-//
-//var catchUpJob = new CronJob({
-//  cronTime: '00 */15 * * * *',
-//  onTick: function() {
-//    poster2.catchUp(function() {
-//      console.log('catched');
-//    });
-//  },
-//  start: true,
-//  timeZone: 'Europe/Moscow'
-//});
-//
+
+var catchUpJob = new CronJob({
+  cronTime: '00 */15 * * * *',
+  onTick: function() {
+    User.find({is_active: true}, function(err, users) {
+      async.forEach(users, function(user, callback) {
+        poster2.catchUp(user, function() {
+          callback();
+        });
+      }, function(err) {
+        console.log('catch', new Date());
+      });
+    });
+  },
+  start: true,
+  timeZone: 'Europe/Moscow'
+});
+
 //var scheduleJob = new CronJob({
 //  cronTime: '00 */30 * * * *',
 //  onTick: function() {
@@ -61,5 +70,5 @@ var postJob = new CronJob({
 
 exports.corovanJob = corovanJob;
 exports.postJob = postJob;
+exports.catchUpJob = catchUpJob;
 //exports.scheduleJob = scheduleJob;
-//exports.catchUpJob = catchUpJob;

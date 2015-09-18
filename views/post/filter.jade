@@ -1,26 +1,51 @@
 form.form-inline
+  - console.log(filter);
   div.form-group
     select.form-control(
     name="failed"
     )
-      option(value='false') Не показывать не отправденные посты
-      option(value='true') Показывать не отправденные посты
-      option(value='') Показывать все посты
+      option(value='false') Не показывать просроченные
+      if filter.failed
+        option(value='true', selected='true') Показывать просроченные
+      else
+        option(value='true') Показывать просроченные
+      if typeof filter.failed == 'undefined'
+        option(value='', selected='selected') Показывать все
+      else
+        option(value='') Показывать все
   div.form-group
     select.form-control(
     name="posted"
     )
-      option(value='false') Не показывать опубликованные посты
-      option(value='true') Показывать опубликованные посты
-      option(value='') Показывать все посты
+      option(value='false') Не показывать опубликованные
+      if filter.posted
+        option(value='true', selected='true') Показывать опубликованные
+      else
+        option(value='true') Показывать опубликованные
+      if typeof filter.posted == 'undefined'
+        option(value='', selected='selected') Показывать все
+      else
+        option(value='') Показывать все
   div.form-group
-    div.input-group.date(id='datetimepicker2')
+    select.form-control(name="group", autocomplete="off")
+      option(value="") Все
+      if typeof filter.group != 'undefined' && !filter.group
+        option(value="null", selected='selected') Моя страница
+      else
+        option(value="null") Моя страница
+      if groups.length
+        each val in groups
+          if JSON.stringify(filter.group) == JSON.stringify(val._id)
+            option(value=val._id, selected='selected')= val.name
+          else
+            option(value=val._id)= val.name
+  - console.log(filter.when.$gt || moment().tz('Europe/Moscow'));
+  div.form-group
+    div.input-group.date
       input.form-control(
+      id='filter_from_date'
       type='text'
       name="from_date"
-      data-date=moment().tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
-      value=moment().tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
+      value=filter.when.$gt || moment().tz('Europe/Moscow')
       )
-      span.input-group-addon
-        span.glyphicon.glyphicon-calendar
   button.btn.btn-default(type="submit") Фильтровать

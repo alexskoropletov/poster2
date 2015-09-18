@@ -51,11 +51,9 @@ block content
         )
     div.form-group
       div.col-sm-2
-        label.col-sm-2.control-label(for="inputName") Id&nbsp;в&nbsp;VK
+        label.col-sm-2.control-label(for="inputVkUserId") Id&nbsp;в&nbsp;VK
       div.col-sm-2
-        label.col-sm-2.control-label(for="inputVkToken") Токен
-      div.col-sm-2
-        label.col-sm-2.control-label(for="inputVkCode") Код для токена
+        label.col-sm-2.control-label(for="inputVkCode") Код&nbsp;для&nbsp;токена
     div.form-group
       div.col-sm-2
         input.form-control(
@@ -69,29 +67,52 @@ block content
       div.col-sm-2
         input.form-control(
         type="text"
-        name="vk_token"
-        id="inputVkToken"
-        placeholder="Токен доступа"
-        value=current_user.vk_token
-        )
-      div.col-sm-2
-        input.form-control(
-        type="text"
         name="vk_code"
         id="inputVkCode"
         placeholder="Код доступа"
         value=current_user.vk_code
+        autocomplete="off"
         )
       div.col-sm-4
         a(
         target="_blank"
         href=config.getCodeUrl(current_user._id)
-        ) Получить код для токена доступа
-        if current_user.vk_code
-          a(
-          target="_blank"
-          href=config.getTokenUrl(current_user)
-          ) Получить токен доступа
+        ) Получить код доступа
+    div.form-group
+      div.col-sm-2
+        label.col-sm-2.control-label(for="inputInterval") Интервал
+      div.col-sm-2
+        label.col-sm-2.control-label(for="inputHours") Часы
+      div.col-sm-2
+        label.col-sm-2.control-label(for="inputHours") Случайный&nbsp;разброс
+    div.form-group
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="post_interval"
+        id="inputInterval"
+        placeholder="20 минут"
+        value=current_user.post_interval
+        autocomplete="off"
+        )
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="post_hours"
+        id="inputHours"
+        placeholder="Часы, через запятую (для автоматического распределения)"
+        value=current_user.post_hours
+        autocomplete="off"
+        )
+      div.col-sm-2
+        input.form-control(
+        type="text"
+        name="post_random"
+        id="inputHours"
+        placeholder="Случайный разброс (по умолчанию - 0)"
+        value=current_user.post_random
+        autocomplete="off"
+        )
     div.form-group
       div.col-sm-2
         button.btn.btn-default(

@@ -1,7 +1,9 @@
 var express = require('express'),
   router = express.Router(),
   mongoose = require('mongoose'),
-  Group = mongoose.model('Group');
+  Group = mongoose.model('Group'),
+  config = require('../bin/config'),
+  vk = require('../bin/vk');
 
 router.all('*', function(req, res, next) {
   if (req.session.user) {
@@ -26,15 +28,22 @@ router.get('/add', function (req, res) {
   res.render('group/add', {group: {}, subtitle: 'Добавление группы'});
 });
 router.post('/save', function (req, res) {
-  new Group({
-    name: req.body.name,
-    url: req.body.url,
-    vk_id: req.body.vk_id,
-    user: req.session.user._id,
-    updated_at: Date.now()
-  }).save(function (err, todo, count) {
-      res.redirect('/group/');
+  config.parseGroupUrl(req.body.url, function(err, group_id) {
+    vk.getGroupInfo(group_id, function(err, group_info) {
+      new Group({
+        name: req.body.name || group_info.name,
+        url: req.body.url,
+        vk_id: req.body.vk_id || group_info.gid,
+        user: req.session.user._id,
+        post_interval: req.body.post_interval,
+        post_hours: req.body.post_hours,
+        post_random: req.body.post_random || 0,
+        updated_at: Date.now()
+      }).save(function (err, todo, count) {
+          res.redirect('/group/');
+        });
     });
+  });
 });
 
 /* удаление */
@@ -81,12 +90,19 @@ router.post('/update/:id', function (req, res) {
     },
     function (err, group) {
       if (group) {
-        group.name = req.body.name;
-        group.vk_id = req.body.vk_id;
-        group.url = req.body.url;
-        group.updated_at = Date.now();
-        group.save(function (err, group, count) {
-          res.redirect('/group/');
+        config.parseGroupUrl(req.body.url, function(err, group_id) {
+          vk.getGroupInfo(group_id, function(err, group_info) {
+            group.name = req.body.name || group_info.name;
+            group.vk_id = req.body.vk_id || group_info.gid;
+            group.url = req.body.url;
+            group.updated_at = Date.now();
+            group.post_interval = req.body.post_interval;
+            group.post_hours = req.body.post_hours;
+            group.post_random = req.body.post_random || 0;
+            group.save(function (err, group) {
+              res.redirect('/group/');
+            });
+          });
         });
       } else {
           res.redirect('/group/');

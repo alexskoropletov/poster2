@@ -255,3 +255,21 @@ exports.getGroupImageUploadUrlCaptcha = function(body, user, callback) {
     }
   );
 };
+
+exports.getGroupInfo = function(group_id, callback) {
+  getRequest(
+    [
+      'group_id=' + group_id
+    ],
+    'groups.getById',
+    function(err, res) {
+      if (err) {
+        console.log(err);
+        callback(err);
+      } else {
+        console.log(res.response);
+        callback(null, res.response[0]);
+      }
+    }
+  );
+};

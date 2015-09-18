@@ -2,6 +2,7 @@ var express = require('express'),
   router = express.Router(),
   mongoose = require('mongoose'),
   User = mongoose.model('User'),
+  user_m = require('../bin/user'),
   config = require('../bin/config'),
   https = require('https'),
   moment = require('moment'),
@@ -88,9 +89,15 @@ router.post('/personal', function (req, res) {
                       if (err) {
                         res.render('common/personal', {subtitle: "Мои настройки", error: ['Ошибка сохранения']});
                       } else {
-                        req.session.user = user;
-                        res.locals.current_user = user;
-                        res.render('common/personal', {subtitle: "Мои настройки", error: ['Изменения сохранены']});
+                        user_m.getAccessToken(user, function(err, user) {
+                          if (err) {
+                            res.render('common/personal', {subtitle: "Мои настройки", error: ['Ошибка сохранения']});
+                          } else {
+                            req.session.user = user;
+                            res.locals.current_user = user;
+                            res.render('common/personal', {subtitle: "Мои настройки", error: ['Изменения сохранены']});
+                          }
+                        });
                       }
                     });
                   });
@@ -99,9 +106,15 @@ router.post('/personal', function (req, res) {
                     if (err) {
                       res.render('common/personal', {subtitle: "Мои настройки", error: ['Ошибка сохранения']});
                     } else {
-                      req.session.user = user;
-                      res.locals.current_user = user;
-                      res.render('common/personal', {subtitle: "Мои настройки", error: ['Изменения сохранены']});
+                      user_m.getAccessToken(user, function(err, user) {
+                        if (err) {
+                          res.render('common/personal', {subtitle: "Мои настройки", error: ['Ошибка сохранения']});
+                        } else {
+                          req.session.user = user;
+                          res.locals.current_user = user;
+                          res.render('common/personal', {subtitle: "Мои настройки", error: ['Изменения сохранены']});
+                        }
+                      });
                     }
                   });
                 }
@@ -117,37 +130,37 @@ router.post('/personal', function (req, res) {
 });
 
 router.get("/vk_code/:user_id", function(req, res) {
-  console.log(req.query, req.params);
-  console.log(JSON.stringify(req.session.user._id), JSON.stringify(req.params.user_id), (JSON.stringify(req.session.user._id) == JSON.stringify(req.params.user_id)));
+  //если пользователь авторизован и его ID совпадает с ID из адресной строки
   if (req.session.user && JSON.stringify(req.session.user._id) == JSON.stringify(req.params.user_id)) {
     User.findOne({_id: req.params.user_id, is_active: true}, function(err, user) {
+      //если такой пользватель еще существует в базе
       if (user) {
+        //если VK API вернул запрашиваемый code
         if (typeof req.query.code != 'undefined') {
+          //формируем https.get запрос с параметрами
           var getOptions = [
             "client_id=" + config.get('vk.appID'),
             "client_secret=" + config.get('vk.appSecret'),
-            "code=" + req.query.code,
-            "scope=friends,groups,photos,audio,video,docs,wall,offline",
-            "redirect_uri=" + encodeURIComponent("http://wizee.ninja/vk_code/" + req.params.user_id)
+            "code=" + req.query.code
+//            "redirect_uri=" + encodeURIComponent("http://wizee.ninja/vk_code/" + req.params.user_id)
           ];
           var options = {
             host: 'oauth.vk.com',
             path: '/access_token?' + getOptions.join("&")
           };
-          console.log("get request options", options, "\n");
           var request = https.get(options, function(response) {
             var bodyChunks = [];
             response.on('data', function(chunk) {
-              console.log('chunk revieved\n');
               bodyChunks.push(chunk);
             }).on('end', function() {
+                //ответ получен. парсим JSON
                 var body = JSON.parse(Buffer.concat(bodyChunks));
-                console.log("Server response", body);
+                console.log(body);
+                //если токен получен, и в ответе VK API тот же ID пользователя, что и в базе
                 if (body && body.access_token && body.user_id == user.vk_id) {
                   user.vk_token = body.access_token;
                   user.save(function(err, user) {
                     if (err) {
-                      console.log(err);
                       res.redirect("/");
                     } else {
                       req.session.user = user;
