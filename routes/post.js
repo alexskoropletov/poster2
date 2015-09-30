@@ -38,7 +38,6 @@ router.get('/do_post/:post_id', function (req, res) {
       approved: true
     };
   }
-  console.log("Фильтр: ", filter);
   poster2.doPost(filter, function(err, user, group) {
     if (err) {
       console.log("Ошибка запроса к API VK", err, user, group);
@@ -66,7 +65,6 @@ router.get('/do_post/:post_id', function (req, res) {
   });
 });
 router.post('/captcha', function(req, res) {
-  console.log(req.body);
   User.findOne({vk_id: req.body.user}, function(err, user) {
     if (user) {
       if (req.body.group) {
@@ -106,7 +104,7 @@ router.post('/captcha', function(req, res) {
 
 /* работа с постами */
 router.get('/page:page', function (req, res) {
-  poster2.getMainPage(req, function(parameters) {
+  poster2.getList(req, function(parameters) {
     res.render(
       'post/list',
       parameters
@@ -125,60 +123,34 @@ router.get('/add', function (req, res) {
       post = {when: new Date()};
     }
     Group.find({user: req.session.user._id}, function(err, groups) {
-      res.render(
-        'post/add',
-        {
-          subtitle: 'Добавить пост',
-          post: {when: new Date(post.when.getTime() + config.get("post.distance"))},
-          groups: groups,
-          images: {}
-        }
-      );
+      config.getNextPostTime(req.session.user, {}, post, function(nextWhen) {
+        res.render(
+          'post/add',
+          {
+            subtitle: 'Добавить пост',
+            post: {when: nextWhen},
+            groups: groups,
+            images: {}
+          }
+        );
+      });
     });
   });
 });
 
 /* сохранение */
 router.post('/save', function (req, res) {
-  if (req.body['imageUrl[]'].length) {
-    new Post({
-      user: req.session.user._id,
-      when: Date.parse(req.body.when),
-      group: req.body.group || null,
-      description: req.body.description
-    }).save(function(err, post, count) {
-        if (err) {
-          console.log("Ошибка сохранения нового поста", err);
-          res.redirect('/post/add');
-        } else {
-          if (req.body['imageUrl[]'].constructor !== Array) {
-            req.body['imageUrl[]'] = [req.body['imageUrl[]']];
-            req.body['imageType[]'] = [req.body['imageType[]']];
-          }
-          async.forEachOf(req.body['imageUrl[]'], function (val, key, callback){
-            new PostImage({
-              image_url: val,
-              image_preview_url: val,
-              type: req.body['imageType[]'][key],
-              post: post._id
-            }).save(function (err, postImage, count) {
-                callback();
-              });
-          }, function(err) {
-            res.redirect('/post/page1');
-          });
-        }
+  poster2.savePost(req, function(err, post) {
+    if (err) {
+      res.redirect('/post/add');
+    } else {
+      poster2.savePostImages(post, req, function() {
+        poster2.savePostAudio(post, req, function() {
+          res.redirect('/post/page1');
+        });
       });
-  } else {
-    new Post({
-      user: req.session.user._id,
-      when: Date.parse(req.body.when),
-      group: req.body.group || null,
-      description: req.body.description
-    }).save(function(err, post, count) {
-      res.redirect('/post/page1');
-    });
-  }
+    }
+  });
 });
 
 /* удаление */
@@ -241,39 +213,25 @@ router.post('/approve', function (req, res) {
   });
 });
 
-/* грабим корованы */
-router.get('/corovan', function (req, res) {
-  tumblr.parseBlog(function() {
-    res.redirect('/post/page1');
-  });
-});
-
-/* грабим корованы */
-router.get('/compress', function (req, res) {
-  poster2.compressTime(req.session.user, function() {
-    res.redirect('/post/page1');
-  });
-});
-
-/* грабим корованы */
 router.get('/fix', function (req, res) {
-  poster2.fix(req.session.user, function() {
-    res.redirect('/post/page1');
+  poster2.catchUp(req.session.user._id, function() {
+    poster2.fix(req.session.user, function() {
+      res.redirect('/post/page1');
+    });
   });
 });
 
 router.get('/schedule', function (req, res) {
-  poster2.schedule(req.session.user, function() {
-    res.redirect("/post/page1");
+  poster2.compressTime(req.session.user, function() {
+    poster2.schedule(req.session.user, function() {
+      res.redirect("/post/page1");
+    });
   });
-//  poster2.addPostTime(Date.now(), req.session.user, function() {
-//    res.redirect("/post/page1");
-//  });
 });
 
-router.get('/catchup', function (req, res) {
-  poster2.catchUp(req.session.user._id, function() {
-    res.redirect("/post/page1");
+router.post('/get_audio', function(req, res) {
+  vk.searchAudio(req.session.user, req.body.q, function(err, result) {
+    res.render('post/search', {result: result});
   });
 });
 

@@ -192,15 +192,14 @@ exports.saveDoc = function(user, response, callback) {
 
 exports.wallPost = function(user, group_id, post, posts, callback) {
   var attachments = [];
-  async.forEach(posts, function(post, callbackInner) {
+  async.forEach(posts, function(post, callback) {
     attachments.push(post[0].id);
-    callbackInner();
+
+    callback();
   }, function(err) {
     var getOptions = [
       'owner_id=' + (group_id ? "-" + group_id : user.vk_id),
       'access_token=' + user.vk_token,
-//      'access_token=' + (user.vk_id == 1549016 ? config.get("vk.access_token") : user.vk_token),
-//      'access_token=' + config.get("vk.access_token"),
       'from_group=1',
       'attachments=' + attachments.join(","),
       'message=' + (typeof post.description != 'undefined' ? encodeURIComponent(post.description) : '')
@@ -272,4 +271,24 @@ exports.getGroupInfo = function(group_id, callback) {
       }
     }
   );
+};
+
+exports.searchAudio = function(user, query, callback) {
+  var getOptions = [
+    'access_token=' + user.vk_token,
+    'q=' + encodeURIComponent(query),
+    'count=10',
+    'search_own=1',
+    'auto_complete=1'
+  ];
+  getRequest(getOptions, 'audio.search', function(err, res) {
+    if (!res || err) {
+      callback(err, null);
+    } else {
+      var results = res.response.filter(function(item) {
+        return typeof item == 'object';
+      });
+      callback(null, results);
+    }
+  });
 };

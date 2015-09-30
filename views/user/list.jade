@@ -8,10 +8,11 @@ block content
         th E-mail
         th Роль
         th Активен
+        th Последний логин
         th Действия
     tbody
       each val in users
-        tr
+        tr(id="user" + val._id)
           td= val.name
           td= val.login
           td= val.email
@@ -26,6 +27,8 @@ block content
                 include ../common/item_active
               else
                 include ../common/item_inactive
+          td
+            = val.last_login
           td
             a(href="/users/edit/" + val._id)
               span.glyphicon.glyphicon-pencil(aria-hidden="true")

@@ -10,13 +10,27 @@ $(function() {
     newImage.find('select').val('image');
     newImage.appendTo('.images-container');
   });
+  //post form audio
+  $(".audio-search").keyup(function() {
+    if ($.trim($(this).val()).length >= 3) {
+      $.post("/post/get_audio", {q: $(this).val()}, function(data) {
+        $("#search_results").html(data);
+      });
+    } else {
+      $("#search_results").html("");
+    }
+  });
+  $("#clear_audio").click(function() {
+    $("#search_results").html("");
+    $(".audio-search").val("");
+  });
+  // post form audio
   $('#datetimepicker2').datetimepicker({
     format: 'YYYY-MM-DD HH:mm',
     locale: 'ru',
     sideBySide: true,
     date: new Date($('#inputWhen').data('date'))
   });
-  console.log($("#filter_from_date").val());
   $('#filter_from_date').datetimepicker({
     format: 'YYYY-MM-DD HH:mm',
     locale: 'ru',
@@ -46,5 +60,16 @@ $(function() {
     $.post("/users/active", {id: $(this).data('id')}, function(data) {
       $(self).html(data);
     });
+  });
+  $(".user_delete").click(function() {
+    var id = "#user" + $(this).data('id');
+    $.post("/users/destroy", {id: $(this).data('id')}, function(data) {
+      if (data.res == 'ok') {
+        $(id).replaceWith("");
+      } else {
+        alert("При удалении пользователя возникла ошибка");
+      }
+    }, 'json');
+    return false;
   });
 });

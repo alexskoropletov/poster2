@@ -1,6 +1,7 @@
 var express = require('express'),
   mongoose = require('mongoose'),
   User = mongoose.model('User'),
+  user_controller = require("../bin/user.js"),
   bcrypt = require('bcrypt'),
   router = express.Router();
 
@@ -97,8 +98,11 @@ router.post('/login', function (req, res) {
     if (user) {
       bcrypt.compare(req.body.password, user.password, function(err, result) {
         if (result) {
-          req.session.user = user;
-          res.redirect("/post/page1");
+          user.last_login = new Date();
+          user.save(function(err, user) {
+            req.session.user = user;
+            res.redirect("/post/page1");
+          });
         } else {
           res.render('user/login', {subtitle: 'Авторизация', message: 'Логин/пароль указаны неправильно'});
         }
@@ -174,6 +178,12 @@ router.post('/active', function (req, res) {
     } else {
       res.render('common/item_inactive');
     }
+  });
+});
+
+router.post('/destroy', function (req, res) {
+  user_controller.destroyUser(req.body.id, function(message) {
+    res.json({res: message});
   });
 });
 

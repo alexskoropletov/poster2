@@ -14,6 +14,7 @@ var User = new Schema({
   post_hours: String,
   post_random: {type: String, default: 0},
   role: {type: String, enum: ['admin','user']},
+  last_login: {type: Date, default: Date.now},
   updated_at: Date
 });
 
@@ -51,12 +52,18 @@ var Post = new Schema({
   group: {type: ObjectId, ref: 'Group'},
   approved: {type: Boolean, default: false},
   posted: {type: Boolean, default: false},
-  failed: {type: Boolean, default: false}
+  failed: {type: Boolean, default: false},
+  created_at: {type: Date, default: Date.now}
 });
 var PostImage = new Schema({
   image_url: String,
   image_preview_url: String,
   type: {type: String, enum: ['image','document']},
+  post: {type: ObjectId, ref: 'Post'}
+});
+var PostAudio = new Schema({
+  attachments_name: String,
+  attachments_id: String,
   post: {type: ObjectId, ref: 'Post'}
 });
 
@@ -66,4 +73,5 @@ mongoose.model('Source', Source);
 mongoose.model('SourcePost', SourcePost);
 mongoose.model('Post', Post);
 mongoose.model('PostImage', PostImage);
+mongoose.model('PostAudio', PostAudio);
 mongoose.connect('mongodb://localhost/express-poster');

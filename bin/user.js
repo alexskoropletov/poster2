@@ -1,5 +1,11 @@
 var mongoose = require('mongoose'),
   User = mongoose.model('User'),
+  Group = mongoose.model('Group'),
+  Source = mongoose.model('Source'),
+  SourcePost = mongoose.model('SourcePost'),
+  Post = mongoose.model('Post'),
+  PostImage = mongoose.model('PostImage'),
+  PostAudio = mongoose.model('PostAudio'),
   vk = require('../bin/vk'),
   config = require('../bin/config'),
   moment = require('moment'),
@@ -52,4 +58,40 @@ exports.getAccessToken = function(user, callback) {
   } else {
     callback(null, user);
   }
+};
+
+exports.destroyUser = function(user_id, callback) {
+  User.findOne({_id: user_id}, function(err, user) {
+    if (user) {
+      Group.find({user: user_id}).remove(function() {
+        Source.find({user: user_id}, function(err, sources) {
+          async.forEach(sources, function(source, sources_callback) {
+            SourcePost.find({source: source._id}).remove(function() {
+              source.remove(function() {
+                sources_callback();
+              });
+            });
+          }, function(err) {
+            Post.find({user: user_id}, function(err, posts) {
+              async.forEach(posts, function(post, posts_callback) {
+                PostImage.find({post: post._id}).remove(function() {
+                  PostAudio.find({post: post._id}).remove(function() {
+                    post.remove(function() {
+                      posts_callback();
+                    });
+                  });
+                });
+              }, function(err) {
+                user.remove(function() {
+                  callback("ok");
+                });
+              });
+            });
+          });
+        });
+      });
+    } else {
+      callback("error");
+    }
+  });
 };

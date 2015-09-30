@@ -21,12 +21,7 @@ block content
           tr(id="postid" + val._id)
             td(scope="row")= moment(val.when).tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
             td
-              if val.group
-                each group in groups
-                  if JSON.stringify(group._id) == JSON.stringify(val.group)
-                    = group.name
-              else
-                На стену
+              = val.group_name || "На стену"
             td
               a.post_approved(href="javascript:void(0);", data-id="" + val._id)
                 if val.approved
@@ -43,9 +38,15 @@ block content
                 Не отправлен
             td= val.description
             td
-              each image in postImages[val._id]
+              each image in val.images
                 a(href=image.image_url, target='_blank')
                   img.max250(src=image.image_preview_url)
+              if val.audios
+                br
+                each audio in val.audios
+                  button.btn(type="button")
+                    = audio.attachments_name
+                  br
             td
               a(href="/post/do_post/" + val._id)
                 span.glyphicon.glyphicon-star-empty(aria-hidden="true")

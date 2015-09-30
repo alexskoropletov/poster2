@@ -4,6 +4,7 @@ var mongoose = require('mongoose'),
     User = mongoose.model('User'),
     Post = mongoose.model('Post'),
     PostImage = mongoose.model('PostImage'),
+    PostAudio = mongoose.model('PostAudio'),
     vk = require('../bin/vk'),
     config = require('../bin/config'),
     moment = require('moment'),
@@ -21,7 +22,6 @@ exports.compressTime = function(user, compressCallback) {
     .sort({when: 1})
     .exec(function(err, post) {
       post.when = Date.now() + config.get("post.first");
-      console.log(post);
       post.save(function(err, post) {
         var new_time = Date.now() + config.get("post.next");
         Post.update(
@@ -35,7 +35,6 @@ exports.compressTime = function(user, compressCallback) {
           {$set: {when: new Date(new_time)}},
           {multi: true}
         ).exec(function(err, posts) {
-            console.log(posts);
             compressCallback();
           });
       });
@@ -69,31 +68,33 @@ exports.schedule = function(user, scheduled) {
           when: {
             "$gt": new Date()
           }
-        },
-        function(err, posts) {
-          var postTimeCalls = [];
-          async.forEach(posts, function(post, callback) {
-            postTimeCalls.push(function(postSaved) {
-              Post.findOne({user: user._id, posted: false, group: group._id}).sort({"when": -1}).exec(function(err, latest_post) {
-                config.getNextPostTime(user, group, latest_post, function(nextWhen) {
-                  post.when = nextWhen;
-                  post.save(function(err, post) {
-                    postSaved();
+        })
+        .sort({created_at: 1})
+        .exec(
+          function(err, posts) {
+            var postTimeCalls = [];
+            async.forEach(posts, function(post, callback) {
+              postTimeCalls.push(function(postSaved) {
+                Post.findOne({user: user._id, posted: false, group: group._id}).sort({"when": -1}).exec(function(err, latest_post) {
+                  config.getNextPostTime(user, group, latest_post, function(nextWhen) {
+                    post.when = nextWhen;
+                    post.save(function(err, post) {
+                      postSaved();
+                    });
                   });
                 });
               });
+              callback();
+            }, function(err) {
+              async.series(
+                postTimeCalls,
+                function(err, result) {
+                  groupsCallback();
+                }
+              );
             });
-            callback();
-          }, function(err) {
-            async.series(
-              postTimeCalls,
-              function(err, result) {
-                groupsCallback();
-              }
-            );
-          });
-        }
-      );
+          }
+        );
     }, function(err) {
       scheduled();
     });
@@ -144,8 +145,30 @@ function addPostTime(date, user, end) {
 
 exports.addPostTime = addPostTime;
 
-exports.getMainPage = function(req, showList) {
-  var postImages = {};
+fillPostsWithData = function(req, posts, callback) {
+  Group.find({user: req.session.user._id}, '_id name', function(err, groups) {
+    async.forEachOf(posts, function (post, index, callback) {
+      async.forEach(groups, function(group, callback) {
+        if(JSON.stringify(group._id) == JSON.stringify(post.group)) {
+          posts[index].group_name = group.name;
+        }
+        callback();
+      }, function(err) {
+        PostImage.find({post: post._id}, function(err, images) {
+          posts[index].images = images;
+          PostAudio.find({post: post._id}, function(err, audios) {
+            posts[index].audios = audios;
+            callback();
+          });
+        });
+      });
+    }, function(err) {
+      callback(posts, groups);
+    });
+  });
+};
+
+exports.getList = function(req, showList) {
   var filter = {
     when: {
       "$gt": req.query.from_date ? moment(req.query.from_date).tz('Europe/Moscow') : moment().tz('Europe/Moscow')
@@ -169,26 +192,17 @@ exports.getMainPage = function(req, showList) {
       pages[x] = "/post/page" + x;
     }
     Post.find(filter).sort({"when": 1}).limit(per_page).skip(skip).exec(function (err, posts) {
-      async.forEachOf(posts, function (post, index, callback) {
-        PostImage.find({post: post._id}, function(err, images) {
-          postImages[post._id] = images;
-          posts[index].group_name = "111";
-          callback();
-        });
-      }, function(err) {
-        Group.find({user: req.session.user._id}, '_id name', function(err, groups) {
-          showList(
-            {
-              subtitle: 'Очередь постов',
-              posts: posts,
-              postImages: postImages,
-              pages: pages,
-              groups: groups,
-              current_page: req.params.page,
-              filter: filter
-            }
-          );
-        });
+      fillPostsWithData(req, posts, function(posts, groups) {
+        showList(
+          {
+            subtitle: 'Очередь постов',
+            posts: posts,
+            pages: pages,
+            groups: groups,
+            current_page: req.params.page,
+            filter: filter
+          }
+        );
       });
     });
   });
@@ -204,7 +218,6 @@ exports.catchUp = function(user, callback) {
     {$set: {failed: true}},
     {multi: true}
   ).exec(function(err, posts) {
-      console.log(posts);
       callback();
     });
 };
@@ -316,21 +329,29 @@ function postToUserPage(post, doAfterPost) {
                       } else {
                         console.log('Будут сохранены следущюие данные', results, "\n");
                         if (results) {
-                          vk.wallPost(user, null, post, results, function(err, postSaved) {
-                            if (err) {
-                              doAfterPost(err, user);
-                            } else {
-                              console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
-                              if (typeof postSaved.response != 'undefined') {
-                                console.log("Отмечаем пост как отправленный", post);
-                                post.posted = true;
-                                post.save(function(err, post) {
-                                  doAfterPost();
-                                });
-                              } else {
-                                doAfterPost(postSaved, user);
-                              }
-                            }
+                          PostAudio.find({post: post._id}, 'attachments_id', function(err, audios) {
+                            async.forEach(audios, function(audio, callback) {
+                              results.push([{id: audio.attachments_id}]);
+                              console.log("results and audios \n", audios, "\n", results);
+                              callback();
+                            }, function(err) {
+                              vk.wallPost(user, null, post, results, function(err, postSaved) {
+                                if (err) {
+                                  doAfterPost(err, user);
+                                } else {
+                                  console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
+                                  if (typeof postSaved.response != 'undefined') {
+                                    console.log("Отмечаем пост как отправленный", post);
+                                    post.posted = true;
+                                    post.save(function(err, post) {
+                                      doAfterPost();
+                                    });
+                                  } else {
+                                    doAfterPost(postSaved, user);
+                                  }
+                                }
+                              });
+                            });
                           });
                         } else {
                           doAfterPost({error: 'empty posts list'});
@@ -459,3 +480,59 @@ function postToGroupPage(post, doAfterPost) {
     }
   });
 }
+
+exports.savePost = function(req, callback) {
+  new Post({
+    user: req.session.user._id,
+    when: Date.parse(req.body.when),
+    group: req.body.group || null,
+    description: req.body.description
+  }).save(function(err, post, count) {
+      callback(err, post);
+    });
+};
+
+exports.savePostImages = function(post, req, callback) {
+  if (req.body['imageUrl[]'] && req.body['imageUrl[]'].length) {
+    if (req.body['imageUrl[]'].constructor !== Array) {
+      req.body['imageUrl[]'] = [req.body['imageUrl[]']];
+      req.body['imageType[]'] = [req.body['imageType[]']];
+    }
+    async.forEachOf(req.body['imageUrl[]'], function (val, key, async_callback){
+      new PostImage({
+        image_url: val,
+        image_preview_url: val,
+        type: req.body['imageType[]'][key],
+        post: post._id
+      }).save(function () {
+          async_callback();
+        });
+    }, function(err) {
+      callback();
+    });
+  } else {
+    callback();
+  }
+};
+
+exports.savePostAudio = function(post, req, callback) {
+  if (req.body['audio_name[]'] && req.body['audio_name[]'].length) {
+    if (req.body['audio_name[]'].constructor !== Array) {
+      req.body['audio_name[]'] = [req.body['audio_name[]']];
+      req.body['audio_id[]'] = [req.body['audio_id[]']];
+    }
+    async.forEachOf(req.body['audio_name[]'], function (val, key, async_callback){
+      new PostAudio({
+        attachments_name: val,
+        attachments_id: req.body['audio_id[]'][key],
+        post: post._id
+      }).save(function () {
+          async_callback();
+        });
+    }, function(err) {
+      callback();
+    });
+  } else {
+    callback();
+  }
+};

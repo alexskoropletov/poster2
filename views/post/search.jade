@@ -1,0 +1,17 @@
+if result
+  table.table
+    tbody
+      each val in result
+        if val
+          tr
+            td
+              = val.artist + " - " + val.title
+            td
+              = Math.floor(val.duration / 60) + ":" + ("0" + (val.duration - Math.floor(val.duration / 60) * 60)).slice(-2)
+            td
+              a.add_audio(href="javascript:void(0);", data-info=JSON.stringify(val).split('"').join('||'))
+                span.glyphicon.glyphicon-plus(aria-hidden="true")
+  script
+    include search.js
+else
+  span.label.label-warning Ничего не найдено
