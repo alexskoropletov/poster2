@@ -28,7 +28,7 @@ block content
               else
                 include ../common/item_inactive
           td
-            = val.last_login
+            = val.last_login ? moment(val.last_login).format("YYYY-MM-DD HH:mm") : ""
           td
             a(href="/users/edit/" + val._id)
               span.glyphicon.glyphicon-pencil(aria-hidden="true")

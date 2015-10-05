@@ -1,0 +1,12 @@
+button.remove_audio.btn(type="button", id="audio" + owner_id + "_" + aid)
+  input(
+    type="hidden"
+    name="audio_name[]"
+    value=artist + " - " + title
+  )
+  input(
+    type="hidden"
+    name="audio_id[]"
+    value="audio" + owner_id + "_" + aid
+  )
+  = artist + " - " + title

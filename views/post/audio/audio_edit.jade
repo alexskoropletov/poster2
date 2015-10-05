@@ -1,0 +1,12 @@
+button.remove_audio.btn(type="button", id=val.attachments_id)
+  input(
+  type="hidden"
+  name="audio_name[]"
+  value=val.attachments_name
+  )
+  input(
+  type="hidden"
+  name="audio_id[]"
+  value=val.attachments_id
+  )
+  = val.attachments_name

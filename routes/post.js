@@ -6,6 +6,7 @@ var express = require('express'),
   Group = mongoose.model('Group'),
   Post = mongoose.model('Post'),
   PostImage = mongoose.model('PostImage'),
+  PostAudio = mongoose.model('PostAudio'),
   async = require('async'),
   poster2 = require('../bin/post'),
   vk = require('../bin/vk'),
@@ -169,16 +170,19 @@ router.post('/destroy', function (req, res) {
 router.get('/edit/:id', function (req, res) {
   Post.findOne({_id: req.params.id, user: req.session.user._id}, function (err, post) {
     PostImage.find({post: post._id}, function(err, images) {
-      Group.find({user: req.session.user._id}, function(err, groups) {
-        res.render(
-          'post/update',
-          {
-            subtitle: 'Редактирование поста',
-            post: post,
-            groups: groups,
-            images: images
-          }
-        );
+      PostAudio.find({post: post._id}, function(err, audios) {
+        Group.find({user: req.session.user._id}, function(err, groups) {
+          res.render(
+            'post/update',
+            {
+              subtitle: 'Редактирование поста',
+              post: post,
+              groups: groups,
+              images: images,
+              audios: audios
+            }
+          );
+        });
       });
     });
   });
@@ -186,12 +190,17 @@ router.get('/edit/:id', function (req, res) {
 
 router.post('/update/:id', function (req, res) {
   Post.findById(req.params.id, function (err, post) {
-    post.when = Date.parse(req.body.when);
-    post.title = req.body.title;
-    post.group = req.body.group;
-    post.description = req.body.description;
-    post.save(function (err, post) {
-      res.redirect('/post/edit/' + req.params.id);
+    poster2.savePostAudio(post, req, function() {
+      poster2.savePostImages(post, req, function() {
+        console.log("request body", req.body);
+        post.when = Date.parse(req.body.when);
+        post.group = req.body.group.length ? req.body.group : null;
+        post.description = req.body.description;
+        post.save(function (err, post) {
+          console.log(err);
+          res.redirect('/post/edit/' + req.params.id);
+        });
+      });
     });
   });
 });
@@ -231,8 +240,20 @@ router.get('/schedule', function (req, res) {
 
 router.post('/get_audio', function(req, res) {
   vk.searchAudio(req.session.user, req.body.q, function(err, result) {
-    res.render('post/search', {result: result});
+    res.render('post/audio/search', {result: result});
   });
+});
+
+router.post('/audio_button', function(req, res) {
+  res.render(
+    'post/audio/audio',
+    {
+      aid: req.body.aid,
+      artist: req.body.artist,
+      title: req.body.title,
+      owner_id: req.body.owner_id
+    }
+  );
 });
 
 module.exports = router;

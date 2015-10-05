@@ -1,28 +1,33 @@
-each val in images
-  div.images-container
-    div.form-group.cloning-image-url
-      label.col-sm-1.control-label(
-      for="inputImageUrl"
-      ) URL
-      div.col-sm-3
-        img(src=val.image_preview_url)
-      div.col-sm-3
-        input.form-control(
-        type="text"
-        name="imageUrl[" + val._id + "]"
-        placeholder="URL картинки"
-        )
-      div.col-sm-3
-        select.form-control(
-        name="imageType[" + val._id + "]"
-        )
-          case val.type
-            when 'document'
-              option(value="image") Изображение
-              option(value="document", selected="selected") Документ
-            default
-              option(value="image", selected="selected") Изображение
-              option(value="document") Документ
+if images
+  each val in images
+    div.images-container(id="image" + val._id)
+      div.form-group.cloning-image-url
+        div.col-sm-1 &nbsp;
+        div.col-sm-5
+          img.max250(src=val.image_preview_url)
+          input.form-control(
+            type="hidden"
+            name="imageUrl[]"
+            value=val.image_url
+          )
+          input.form-control(
+            type="hidden"
+            name="imagePreview[]"
+            value=val.image_preview_url
+          )
+        div.col-sm-4
+          select.form-control(
+          name="imageType[]"
+          )
+            case val.type
+              when 'document'
+                option(value="image") Изображение
+                option(value="document", selected="selected") Документ
+              default
+                option(value="image", selected="selected") Изображение
+                option(value="document") Документ
+        div.col-sm-1
+          button.remove-image.btn.btn-danger(type="button") Удалить
 div.images-container
   div.form-group.cloning-image-url
     label.col-sm-1.control-label(
@@ -96,6 +101,9 @@ div.form-group
   div#search_results.col-sm-offset-1.col-sm-10
 div.form-group
   div#audios.col-sm-offset-1.col-sm-10
+    if audios
+      each val in audios
+        include audio/audio_edit
 div.form-group
   label.col-sm-1.control-label(
   for="inputGroup"

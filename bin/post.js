@@ -493,46 +493,59 @@ exports.savePost = function(req, callback) {
 };
 
 exports.savePostImages = function(post, req, callback) {
-  if (req.body['imageUrl[]'] && req.body['imageUrl[]'].length) {
-    if (req.body['imageUrl[]'].constructor !== Array) {
-      req.body['imageUrl[]'] = [req.body['imageUrl[]']];
-      req.body['imageType[]'] = [req.body['imageType[]']];
-    }
-    async.forEachOf(req.body['imageUrl[]'], function (val, key, async_callback){
-      new PostImage({
-        image_url: val,
-        image_preview_url: val,
-        type: req.body['imageType[]'][key],
-        post: post._id
-      }).save(function () {
-          async_callback();
-        });
-    }, function(err) {
+  PostImage.find({post: post._id}).remove(function() {
+    if (req.body['imageUrl[]'] && req.body['imageUrl[]'].length) {
+      if (req.body['imageUrl[]'].constructor !== Array) {
+        req.body['imageUrl[]'] = [req.body['imageUrl[]']];
+      }
+      if (req.body['imagePreview[]'] && req.body['imagePreview[]'].constructor !== Array) {
+        req.body['imagePreview[]'] = [req.body['imagePreview[]']];
+      }
+      if (req.body['imageType[]'].constructor !== Array) {
+        req.body['imageType[]'] = [req.body['imageType[]']];
+      }
+      async.forEachOf(req.body['imageUrl[]'], function (val, key, callback){
+        if (val) {
+          new PostImage({
+            image_url: val,
+            image_preview_url: req.body['imagePreview[]'] && req.body['imagePreview[]'][key] ? req.body['imagePreview[]'][key] : val,
+            type: req.body['imageType[]'][key],
+            post: post._id
+          }).save(function () {
+              callback();
+            });
+        } else {
+          callback();
+        }
+      }, function(err) {
+        callback();
+      });
+    } else {
       callback();
-    });
-  } else {
-    callback();
-  }
+    }
+  });
 };
 
 exports.savePostAudio = function(post, req, callback) {
-  if (req.body['audio_name[]'] && req.body['audio_name[]'].length) {
-    if (req.body['audio_name[]'].constructor !== Array) {
-      req.body['audio_name[]'] = [req.body['audio_name[]']];
-      req.body['audio_id[]'] = [req.body['audio_id[]']];
-    }
-    async.forEachOf(req.body['audio_name[]'], function (val, key, async_callback){
-      new PostAudio({
-        attachments_name: val,
-        attachments_id: req.body['audio_id[]'][key],
-        post: post._id
-      }).save(function () {
-          async_callback();
-        });
-    }, function(err) {
+  PostAudio.find({post: post._id}).remove(function() {
+    if (req.body['audio_name[]'] && req.body['audio_name[]'].length) {
+      if (req.body['audio_name[]'].constructor !== Array) {
+        req.body['audio_name[]'] = [req.body['audio_name[]']];
+        req.body['audio_id[]'] = [req.body['audio_id[]']];
+      }
+      async.forEachOf(req.body['audio_name[]'], function (val, key, async_callback){
+        new PostAudio({
+          attachments_name: val,
+          attachments_id: req.body['audio_id[]'][key],
+          post: post._id
+        }).save(function () {
+            async_callback();
+          });
+      }, function(err) {
+        callback();
+      });
+    } else {
       callback();
-    });
-  } else {
-    callback();
-  }
+    }
+  });
 };

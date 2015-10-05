@@ -11,7 +11,7 @@ if result
             td
               a.add_audio(href="javascript:void(0);", data-info=JSON.stringify(val).split('"').join('||'))
                 span.glyphicon.glyphicon-plus(aria-hidden="true")
-  script
-    include search.js
+  script.
+    addListeners();
 else
   span.label.label-warning Ничего не найдено

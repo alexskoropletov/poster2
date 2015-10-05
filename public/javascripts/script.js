@@ -10,6 +10,9 @@ $(function() {
     newImage.find('select').val('image');
     newImage.appendTo('.images-container');
   });
+  $(".remove-image").click(function() {
+    $(this).parents(".images-container").replaceWith("");
+  });
   //post form audio
   $(".audio-search").keyup(function() {
     if ($.trim($(this).val()).length >= 3) {
@@ -72,4 +75,20 @@ $(function() {
     }, 'json');
     return false;
   });
+  addListeners();
 });
+
+function addListeners() {
+  $(".remove_audio").off("click").on("click", function() {
+    $(this).replaceWith("");
+  });
+  $(".add_audio").off("click").on("click", function() {
+    var audio = JSON.parse($(this).data('info').split("||").join('"'));
+    if (!$("#audio" + audio.owner_id + "_" + audio.aid).size()) {
+      $.post("/post/audio_button", audio, function(data) {
+        $("#audios").append(data);
+        addListeners();
+      });
+    }
+  });
+}

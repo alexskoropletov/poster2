@@ -36,13 +36,15 @@ div.form-group
 div.form-group
   label.col-sm-2.control-label(for="inputInterval") Интервал минут между постами
   div.col-sm-10
-    input.form-control(
-    type="text"
-    name="post_interval"
-    id="inputInterval"
-    placeholder="Интервал минут между постами (для автоматического распределения)"
-    value=group.post_interval
-    )
+    div.input-group
+      input.form-control(
+      type="text"
+      name="post_interval"
+      id="inputInterval"
+      placeholder="Интервал минут между постами (для автоматического распределения)"
+      value=group.post_interval
+      )
+      div.input-group-addon минуты
 div.form-group
   label.col-sm-2.control-label(for="inputHours") Часы для постов
   div.col-sm-10
@@ -56,13 +58,15 @@ div.form-group
 div.form-group
   label.col-sm-2.control-label(for="inputRandom") Случайное отклонение
   div.col-sm-10
-    input.form-control(
-    type="text"
-    name="post_random"
-    id="inputRandom"
-    placeholder="Случайный разброс (по умолчанию - 0)"
-    value=group.post_random
-    )
+    div.input-group
+      input.form-control(
+      type="text"
+      name="post_random"
+      id="inputRandom"
+      placeholder="Случайный разброс (по умолчанию - 0)"
+      value=group.post_random
+      )
+      div.input-group-addon минуты
 div.form-group
   div.col-sm-offset-2.col-sm-10
     button.btn.btn-default(type="submit") Сохранить

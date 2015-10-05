@@ -87,14 +87,16 @@ block content
         label.col-sm-2.control-label(for="inputHours") Случайный&nbsp;разброс
     div.form-group
       div.col-sm-2
-        input.form-control(
-        type="text"
-        name="post_interval"
-        id="inputInterval"
-        placeholder="20 минут"
-        value=current_user.post_interval
-        autocomplete="off"
-        )
+        div.input-group
+          input.form-control(
+          type="text"
+          name="post_interval"
+          id="inputInterval"
+          placeholder="20 минут"
+          value=current_user.post_interval
+          autocomplete="off"
+          )
+          div.input-group-addon мин.
       div.col-sm-2
         input.form-control(
         type="text"
@@ -105,14 +107,16 @@ block content
         autocomplete="off"
         )
       div.col-sm-2
-        input.form-control(
-        type="text"
-        name="post_random"
-        id="inputHours"
-        placeholder="Случайный разброс (по умолчанию - 0)"
-        value=current_user.post_random
-        autocomplete="off"
-        )
+        div.input-group
+          input.form-control(
+          type="text"
+          name="post_random"
+          id="inputHours"
+          placeholder="Случайный разброс (по умолчанию - 0)"
+          value=current_user.post_random
+          autocomplete="off"
+          )
+          div.input-group-addon мин.
     div.form-group
       div.col-sm-2
         button.btn.btn-default(
