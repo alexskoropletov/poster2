@@ -169,6 +169,10 @@ fillPostsWithData = function(req, posts, callback) {
 };
 
 exports.getList = function(req, showList) {
+  var pagination_tail = [];
+  if (req.query.from_date) {
+    pagination_tail.push("from_date=" + req.query.from_date);
+  }
   var filter = {
     when: {
       "$gt": req.query.from_date ? moment(req.query.from_date).tz('Europe/Moscow') : moment().tz('Europe/Moscow')
@@ -177,12 +181,15 @@ exports.getList = function(req, showList) {
   };
   if (req.query.group) {
     filter.group = req.query.group == 'null' ? null : req.query.group;
+    pagination_tail.push("group=" + req.query.group);
   }
   if (req.query.posted) {
     filter.posted = req.query.posted == 'true';
+    pagination_tail.push("posted=" + req.query.posted);
   }
   if (req.query.failed) {
     filter.failed = req.query.failed == 'true';
+    pagination_tail.push("failed=" + req.query.failed);
   }
   Post.count(filter, function(err, count) {
     var per_page = 50;
@@ -190,6 +197,9 @@ exports.getList = function(req, showList) {
     var pages = {};
     for (var x = 1; x <= Math.ceil(count / per_page); x++) {
       pages[x] = "/post/page" + x;
+      if (pagination_tail.length) {
+        pages[x] += "?" + pagination_tail.join("&");
+      }
     }
     Post.find(filter).sort({"when": 1}).limit(per_page).skip(skip).exec(function (err, posts) {
       fillPostsWithData(req, posts, function(posts, groups) {

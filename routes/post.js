@@ -197,7 +197,6 @@ router.post('/update/:id', function (req, res) {
         post.group = req.body.group.length ? req.body.group : null;
         post.description = req.body.description;
         post.save(function (err, post) {
-          console.log(err);
           res.redirect('/post/edit/' + req.params.id);
         });
       });
