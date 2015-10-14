@@ -26,6 +26,19 @@ form.form-inline
         option(value='', selected='selected') Показывать все
       else
         option(value='') Показывать все
+  div.form-groupdiv.form-group
+    select.form-control(
+    name="approved"
+    )
+      option(value='false') Показывать только не одобренные
+      if filter.approved
+        option(value='true', selected='true') Показывать только одобренные
+      else
+        option(value='true') Показывать только одобренные
+      if typeof filter.approved == 'undefined'
+        option(value='', selected='selected') Показывать все
+      else
+        option(value='') Показывать все
   div.form-group
     select.form-control(name="group", autocomplete="off")
       option(value="") Все

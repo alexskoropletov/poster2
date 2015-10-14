@@ -183,6 +183,10 @@ exports.getList = function(req, showList) {
     filter.group = req.query.group == 'null' ? null : req.query.group;
     pagination_tail.push("group=" + req.query.group);
   }
+  if (req.query.approved) {
+    filter.approved = req.query.approved == 'null' ? null : req.query.approved;
+    pagination_tail.push("approved=" + req.query.approved);
+  }
   if (req.query.posted) {
     filter.posted = req.query.posted == 'true';
     pagination_tail.push("posted=" + req.query.posted);
