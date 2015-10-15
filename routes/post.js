@@ -41,7 +41,7 @@ router.get('/do_post/:post_id', function (req, res) {
   }
   poster2.doPost(filter, function(err, user, group) {
     if (err) {
-      console.log("Ошибка запроса к API VK", err, user, group);
+      console.log("Ошибка отправки поста", err);
       if (err.error && err.error.error_code == 14) {
         var renderData = {
           subtitle: "Капча VK",
@@ -57,8 +57,9 @@ router.get('/do_post/:post_id', function (req, res) {
           renderData
         );
       } else {
-        console.log(err);
-        res.redirect('/post/page1');
+        poster2.moveFailedPost(filter, function() {
+          res.redirect('/post/page1');
+        });
       }
     } else {
       res.redirect('/post/page1');
@@ -192,7 +193,6 @@ router.post('/update/:id', function (req, res) {
   Post.findById(req.params.id, function (err, post) {
     poster2.savePostAudio(post, req, function() {
       poster2.savePostImages(post, req, function() {
-        console.log("request body", req.body);
         post.when = Date.parse(req.body.when);
         post.group = req.body.group.length ? req.body.group : null;
         post.description = req.body.description;

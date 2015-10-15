@@ -263,6 +263,19 @@ exports.destroy = function(post_id, callback) {
   });
 };
 
+exports.moveFailedPost = function(filter, callback) {
+  Post.findOne(filter, function(err, post) {
+    if (post) {
+      post.when = post.when.getTime() + 2 * 60 * 1000; // добавляем провальному посту 2 минуты, чтобы он был отправлен позже
+      post.save(function(err) {
+        callback();
+      });
+    } else {
+      callback();
+    }
+  });
+};
+
 exports.doPost = function(filter, doAfterPost) {
   Post.findOne(
     filter,
@@ -285,7 +298,6 @@ function postToUserPage(post, doAfterPost) {
     if (user) {
       vk.getImageUploadUrl(user, function(err, image_upload_url) {
         if (err) {
-          console.log(err);
           doAfterPost(err, user);
         } else {
           console.log("Image upload url", image_upload_url, "\n");
