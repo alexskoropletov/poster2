@@ -16,7 +16,6 @@ getRequest = function(getOptions, method, callback) {
   var req = https.get(options, function(res) {
     var bodyChunks = [];
     res.on('data', function(chunk) {
-      console.log('chunk revieved\n');
       bodyChunks.push(chunk);
     }).on('end', function() {
         var body = JSON.parse(Buffer.concat(bodyChunks));
@@ -28,9 +27,9 @@ getRequest = function(getOptions, method, callback) {
       })
   });
   req.on('socket', function(socket) {
-    socket.setTimeout(30000);
+    socket.setTimeout(config.get('vk.timeout'));
     socket.on('timeout', function() {
-      console.log('Преывшен таймаут в 30 секунд для GET-запроса');
+      console.log('Превышен таймаут в 15 секунд для GET-запроса');
       req.abort();
     });
   });
@@ -43,7 +42,6 @@ getUploadUrl = function(type, user, group_id, callback) {
   var getOptions = [
     'access_token=' + user.vk_token
   ];
-
   if (type != 'image') {
     if (!group_id) {
       getOptions.push('user_id=' + user.vk_id);
@@ -57,7 +55,6 @@ getUploadUrl = function(type, user, group_id, callback) {
     }
     var method = 'photos.getWallUploadServer';
   }
-
   getRequest(getOptions, method, function(err, res) {
     if (!res || err) {
       console.log("Ошибка обращения к API VK: ", res, err);
@@ -99,8 +96,6 @@ uploadFile = function(type, image, upload_url, callback) {
             data: data
           }
         ).on("error", function(err, response) {
-            console.log(err);
-            console.log(response);
             fs.unlink(new_file_name, function() {
               callback(null);
             });

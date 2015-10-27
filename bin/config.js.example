@@ -15,7 +15,9 @@ var config = {
     appID         : '',
     appSecret     : "",
     mode          : "oauth",
-    access_token  : ""
+    access_token  : "",
+    timeout       : 15000, // 15 sec
+    post_penalty  : 2 * 60 * 1000 // 2 min
   }
 };
 

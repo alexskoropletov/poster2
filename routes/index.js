@@ -16,13 +16,12 @@ router.all('*', function(req, res, next) {
   res.locals.tz = tz;
   res.locals.current_user = req.session.user || {};
   console.log(req.url);
-  if (req.url.indexOf("/vk_code") < 0 && req.url != "/users/logout" && req.url != "/personal" && req.session.user && (!req.session.user.vk_id || !req.session.user.vk_token)) {
+  if (req.url.indexOf("/vk_code") < 0 && req.url != "/users/logout" && req.url != "/personal" && req.session.user && !req.session.user.vk_token) {
     res.render(
       'common/personal',
       {
         subtitle: "Мои настройки",
         error: [
-          "Поле 'Id в VK' обязательно для заполнения",
           "Нужно обязательно получить токен доступа"
         ]
       }
@@ -129,6 +128,35 @@ router.post('/personal', function (req, res) {
   });
 });
 
+router.get("/get_user_data", function(req, res) {
+  var options = {
+    host: 'oauth.vk.com',
+    path: '/authorize?client_id=4416188&scope=friends,groups,photos,audio,video,docs,wall,offline&display=page&response_type=code'
+  };
+  console.log(options);
+  var request = https.get(options, function(response) {
+    var bodyChunks = [];
+    response.on('data', function(chunk) {
+      bodyChunks.push(chunk);
+    }).on('end', function() {
+      var body = JSON.parse(Buffer.concat(bodyChunks));
+      console.log("Получены данные ", body);
+      res.redirect("/personal");
+    })
+  });
+  //request.on('socket', function(socket) {
+  //  socket.setTimeout(15000);
+  //  socket.on('timeout', function() {
+  //    request.abort();
+  //  });
+  //});
+  //request.on('error', function(e) {
+  //  console.log(e);
+  //  res.redirect("/personal");
+  //});
+});
+
+
 router.get("/vk_code/:user_id", function(req, res) {
   //если пользователь авторизован и его ID совпадает с ID из адресной строки
   if (req.session.user && JSON.stringify(req.session.user._id) == JSON.stringify(req.params.user_id)) {
@@ -174,7 +202,7 @@ router.get("/vk_code/:user_id", function(req, res) {
               })
           });
           request.on('socket', function(socket) {
-            socket.setTimeout(30000);
+            socket.setTimeout(config.get('vk.timeout'));
             socket.on('timeout', function() {
               console.log('Преывшен таймаут в 30 секунд для GET-запроса');
               request.abort();

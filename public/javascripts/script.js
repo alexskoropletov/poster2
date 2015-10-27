@@ -76,6 +76,12 @@ $(function() {
     return false;
   });
   addListeners();
+  $('#vkcodeframe').load(function(){
+    console.log($(this).attr("src"));
+  });
+  $("#getcode").click(function() {
+    $("#vkcodeframe").attr('src', $(this).data('url'));
+  });
 });
 
 function addListeners() {

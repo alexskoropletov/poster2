@@ -266,7 +266,7 @@ exports.destroy = function(post_id, callback) {
 exports.moveFailedPost = function(filter, callback) {
   Post.findOne(filter, function(err, post) {
     if (post) {
-      post.when = post.when.getTime() + 2 * 60 * 1000; // добавляем провальному посту 2 минуты, чтобы он был отправлен позже
+      post.when = post.when.getTime() + config.get('vk.post_penalty'); // добавляем провальному посту 2 минуты, чтобы он был отправлен позже
       post.save(function(err) {
         callback();
       });

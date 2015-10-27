@@ -75,9 +75,19 @@ block content
         )
       div.col-sm-4
         a(
+        href=config.getCodeUrl()
         target="_blank"
-        href=config.getCodeUrl(current_user._id)
         ) Получить код доступа
+      //div.col-sm-4
+      //  a(
+      //  href="/get_user_data"
+      //  ) Получить код доступа 2
+      //div.col-sm-4
+      //  a#getcode(
+      //  data-url=config.getCodeUrl()
+      //  href="#"
+      //  ) Получить код доступа
+      //  iframe#vkcodeframe(width='200', height='200')
     div.form-group
       div.col-sm-2
         label.col-sm-2.control-label(for="inputInterval") Интервал

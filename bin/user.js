@@ -28,25 +28,26 @@ exports.getAccessToken = function(user, callback) {
       response.on('data', function(chunk) {
         bodyChunks.push(chunk);
       }).on('end', function() {
-          var body = JSON.parse(Buffer.concat(bodyChunks));
-          //если токен получен, и в ответе VK API тот же ID пользователя, что и в базе
-          if (body && body.access_token && body.user_id == user.vk_id) {
-            user.vk_token = body.access_token;
-            user.code = null;
-            user.save(function(err, user) {
-              if (err) {
-                callback(err, null);
-              } else {
-                callback(null, user);
-              }
-            });
-          } else {
-            callback(null, user);
-          }
-        })
+        var body = JSON.parse(Buffer.concat(bodyChunks));
+        //если токен получен
+        if (body && body.access_token) {
+          user.vk_id = body.user_id;
+          user.vk_token = body.access_token;
+          user.code = null;
+          user.save(function(err, user) {
+            if (err) {
+              callback(err, null);
+            } else {
+              callback(null, user);
+            }
+          });
+        } else {
+          callback(null, user);
+        }
+      })
     });
     request.on('socket', function(socket) {
-      socket.setTimeout(15000);
+      socket.setTimeout(config.get('vk.timeout'));
       socket.on('timeout', function() {
         console.log('Преывшен таймаут в 30 секунд для GET-запроса');
         request.abort();
