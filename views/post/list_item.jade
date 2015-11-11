@@ -1,0 +1,42 @@
+tr(id="postid" + post._id)
+  td(scope="row")= moment(post.when).tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
+  td
+    = post.group_name || "На стену"
+  td
+    a.post_approved(href="javascript:void(0);", data-id="" + post._id)
+      if post.approved
+        include ../common/item_active
+      else
+        include ../common/item_inactive
+  td
+    if post.posted
+      Опубликован
+    else
+      Не опубликован
+  td
+    if post.failed
+      Не отправлен
+  td= post.description
+  td
+    each image in post.images
+      a(href=image.image_url, target='_blank')
+        img.max250(src=image.image_preview_url)
+    if post.audios
+      br
+      each audio in post.audios
+        button.btn(type="button")
+          = audio.attachments_name
+        br
+  td
+    a(href="/post/do_post/" + post._id)
+      span.glyphicon.glyphicon-star-empty(aria-hidden="true")
+  td
+    a(href="/post/edit/" + post._id)
+      span.glyphicon.glyphicon-pencil(aria-hidden="true")
+  td
+    a.delete_link(
+    href="javascript: void(0);"
+    data-post="" + post._id
+    data-page="" + current_page
+    )
+      span.glyphicon.glyphicon-remove(aria-hidden="true")

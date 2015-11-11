@@ -16,49 +16,9 @@ block content
           th -
           th -
           th -
-      tbody
-        each val in posts
-          tr(id="postid" + val._id)
-            td(scope="row")= moment(val.when).tz('Europe/Moscow').format("YYYY.MM.DD HH:mm")
-            td
-              = val.group_name || "На стену"
-            td
-              a.post_approved(href="javascript:void(0);", data-id="" + val._id)
-                if val.approved
-                  include ../common/item_active
-                else
-                  include ../common/item_inactive
-            td
-              if val.posted
-                Опубликован
-              else
-                Не опубликован
-            td
-              if val.failed
-                Не отправлен
-            td= val.description
-            td
-              each image in val.images
-                a(href=image.image_url, target='_blank')
-                  img.max250(src=image.image_preview_url)
-              if val.audios
-                br
-                each audio in val.audios
-                  button.btn(type="button")
-                    = audio.attachments_name
-                  br
-            td
-              a(href="/post/do_post/" + val._id)
-                span.glyphicon.glyphicon-star-empty(aria-hidden="true")
-            td
-              a(href="/post/edit/" + val._id)
-                span.glyphicon.glyphicon-pencil(aria-hidden="true")
-            td
-              a.delete_link(
-                href="javascript: void(0);"
-                data-post="" + val._id
-              )
-                span.glyphicon.glyphicon-remove(aria-hidden="true")
+      tbody#post_list
+        each post in posts
+          include list_item
     include paginate
   else
     span.label.label-warning Ваш список постов пуст

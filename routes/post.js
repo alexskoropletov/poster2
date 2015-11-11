@@ -163,7 +163,13 @@ router.get('/destroy/:id/:current_page', function (req, res) {
 });
 router.post('/destroy', function (req, res) {
   poster2.destroy(req.body.post_id, function() {
-    res.json({res:'ok'});
+    poster2.getLastPagePost(req, function(post) {
+      if (post) {
+        res.render('post/list_item', {post: post});
+      } else {
+        res.json({res:'ok'});
+      }
+    });
   });
 });
 

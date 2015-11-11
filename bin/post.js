@@ -51,7 +51,6 @@ exports.fix = function(user, callback) {
     {$set: {failed: false, when: new Date(Date.now() + 60 * 60 * 5 * 1000)}},
     {multi: true}
   ).exec(function(err, posts) {
-      console.log(posts);
       callback();
     });
 };
@@ -111,7 +110,6 @@ function addPostTime(date, user, end) {
       }
     }
   ).sort({"when": 1}).exec(function (err, startpost) {
-      console.log(startpost);
     if (startpost) {
       Post.find(
         {
@@ -124,7 +122,6 @@ function addPostTime(date, user, end) {
         }
       ).sort({"when": 1}).exec(function(err, posts) {
           async.forEach(posts, function(post, callback) {
-            console.log("Группа поста", post);
             Group.findOne({_id: post.group}, function(err, group) {
               config.getNextPostTime(user, group, post, function(nextWhen) {
                 post.when = nextWhen;
@@ -148,20 +145,24 @@ exports.addPostTime = addPostTime;
 fillPostsWithData = function(req, posts, callback) {
   Group.find({user: req.session.user._id}, '_id name', function(err, groups) {
     async.forEachOf(posts, function (post, index, callback) {
-      async.forEach(groups, function(group, callback) {
-        if(JSON.stringify(group._id) == JSON.stringify(post.group)) {
-          posts[index].group_name = group.name;
-        }
-        callback();
-      }, function(err) {
-        PostImage.find({post: post._id}, function(err, images) {
-          posts[index].images = images;
-          PostAudio.find({post: post._id}, function(err, audios) {
-            posts[index].audios = audios;
-            callback();
+      if (post) {
+        async.forEach(groups, function(group, callback) {
+          if (JSON.stringify(group._id) == JSON.stringify(post.group)) {
+            posts[index].group_name = group.name;
+          }
+          callback();
+        }, function (err) {
+          PostImage.find({post: post._id}, function (err, images) {
+            posts[index].images = images;
+            PostAudio.find({post: post._id}, function (err, audios) {
+              posts[index].audios = audios;
+              callback();
+            });
           });
         });
-      });
+      } else {
+        callback();
+      }
     }, function(err) {
       callback(posts, groups);
     });
@@ -217,6 +218,35 @@ exports.getList = function(req, showList) {
             filter: filter
           }
         );
+      });
+    });
+  });
+};
+
+exports.getLastPagePost = function(req, callback) {
+  var filter = {
+    when: {
+      "$gt": req.body.from_date ? moment(req.body.from_date).tz('Europe/Moscow') : moment().tz('Europe/Moscow')
+    },
+    user: req.session.user._id
+  };
+  if (req.body.group) {
+    filter.group = req.body.group == 'null' ? null : req.body.group;
+  }
+  if (req.body.approved) {
+    filter.approved = req.body.approved == 'null' ? null : req.body.approved;
+  }
+  if (req.body.posted) {
+    filter.posted = req.body.posted == 'true';
+  }
+  if (req.body.failed) {
+    filter.failed = req.body.failed == 'true';
+  }
+  Post.count(filter, function(err, count) {
+    var skip = (req.body.page - 1) * 50 + 49;
+    Post.findOne(filter).sort({"when": 1}).skip(skip).exec(function (err, post) {
+      fillPostsWithData(req, [post], function(posts, groups) {
+        callback(posts[0]);
       });
     });
   });

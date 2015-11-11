@@ -1,7 +1,7 @@
 form.form-inline
   - console.log(filter);
   div.form-group
-    select.form-control(
+    select#filter_failed.form-control(
     name="failed"
     )
       option(value='false') Не показывать просроченные
@@ -14,7 +14,7 @@ form.form-inline
       else
         option(value='') Показывать все
   div.form-group
-    select.form-control(
+    select#filter_posted.form-control(
     name="posted"
     )
       option(value='false') Не показывать опубликованные
@@ -27,7 +27,7 @@ form.form-inline
       else
         option(value='') Показывать все
   div.form-groupdiv.form-group
-    select.form-control(
+    select#filter_approved.form-control(
     name="approved"
     )
       option(value='false') Показывать только не одобренные
@@ -40,7 +40,7 @@ form.form-inline
       else
         option(value='') Показывать все
   div.form-group
-    select.form-control(name="group", autocomplete="off")
+    select#filter_group.form-control(name="group", autocomplete="off")
       option(value="") Все
       if typeof filter.group != 'undefined' && !filter.group
         option(value="null", selected='selected') Моя страница
@@ -55,8 +55,7 @@ form.form-inline
   - console.log(filter.when.$gt || moment().tz('Europe/Moscow'));
   div.form-group
     div.input-group.date
-      input.form-control(
-      id='filter_from_date'
+      input#filter_from_date.form-control(
       type='text'
       name="from_date"
       value=filter.when.$gt || moment().tz('Europe/Moscow')
