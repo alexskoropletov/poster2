@@ -19,6 +19,8 @@ nav.navbar.navbar-default.navbar-inverse
               li: a(href='/post/add') Добавить пост
               li: a(href='/post/schedule') Распределить расписание
               li: a(href='/post/fix') Обновить дату постов с ошибками
+              if current_user && current_user.role == 'admin'
+                li: a(href='/post/corovan') Грабить корованы
           li.dropdown
             a.dropdown-toggle(
             href="#"

@@ -347,74 +347,88 @@ function postToUserPage(post, doAfterPost) {
                       if (image.type == 'document') {
                         vk.uploadDoc(image, doc_upload_url, function(vk_res) {
                           console.log("vk.uploadDoc function response ", vk_res);
-                          vk.saveDoc(user, vk_res, function(response) {
-                            console.log("vk.saveDoc function response ", response);
-                            if (response.error) {
-                              saveImageCallback(response.error);
-                            } else {
-                              console.log(response);
-                              response[0].id = 'doc' + response[0].owner_id + "_" + response[0].did;
-                              saveImageCallback(null, response);
-                            }
-                          });
+                          if (!vk_res) {
+                            saveImageCallback({error: "vk.uploadImage empty response"});
+                          } else {
+                            vk.saveDoc(user, vk_res, function (response) {
+                              console.log("vk.saveDoc function response ", response);
+                              if (response.error) {
+                                saveImageCallback(response.error);
+                              } else {
+                                console.log(response);
+                                response[0].id = 'doc' + response[0].owner_id + "_" + response[0].did;
+                                console.log("Файл отправлен в ВК", "\n");
+                                saveImageCallback(null, response);
+                              }
+                            });
+                          }
                         });
                       } else {
                         vk.uploadImage(image, image_upload_url, function(vk_res) {
                           console.log("vk.uploadImage function response ", vk_res);
-                          vk.saveUserImage(user, JSON.parse(vk_res), function(response) {
-                            console.log("vk.saveImage function response ", response);
-                            if (response.error) {
-                              saveImageCallback(response.error);
-                            } else {
-                              saveImageCallback(null, response);
-                            }
-                          });
+                          if (!vk_res) {
+                            saveImageCallback({error: "vk.uploadImage empty response"});
+                          } else {
+                            vk.saveUserImage(user, JSON.parse(vk_res), function(response) {
+                              console.log("vk.saveImage function response ", response);
+                              if (response.error) {
+                                saveImageCallback(response.error);
+                              } else {
+                                console.log("Файл отправлен в ВК", "\n");
+                                saveImageCallback(null, response);
+                              }
+                            });
+                          }
                         });
                       }
-                      console.log("Файл отправлен в ВК", "\n");
                     }, 1000);
                   });
                   callback();
                 }, function(err) {
-                  async.series(
-                    saveImage,
-                    function(err, results) {
-                      if (err) {
-                        console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
-                        doAfterPost(err);
-                      } else {
-                        console.log('Будут сохранены следущюие данные', results, "\n");
-                        if (results) {
-                          PostAudio.find({post: post._id}, 'attachments_id', function(err, audios) {
-                            async.forEach(audios, function(audio, callback) {
-                              results.push([{id: audio.attachments_id}]);
-                              console.log("results and audios \n", audios, "\n", results);
-                              callback();
-                            }, function(err) {
-                              vk.wallPost(user, null, post, results, function(err, postSaved) {
-                                if (err) {
-                                  doAfterPost(err, user);
-                                } else {
-                                  console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
-                                  if (typeof postSaved.response != 'undefined') {
-                                    console.log("Отмечаем пост как отправленный", post);
-                                    post.posted = true;
-                                    post.save(function(err, post) {
-                                      doAfterPost();
-                                    });
+                  if (err) {
+                    console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
+                    doAfterPost(err);
+                  } else {
+                    async.series(
+                      saveImage,
+                      function (err, results) {
+                        if (err) {
+                          console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
+                          doAfterPost(err);
+                        } else {
+                          console.log('Будут сохранены следущюие данные', results, "\n");
+                          if (results) {
+                            PostAudio.find({post: post._id}, 'attachments_id', function (err, audios) {
+                              async.forEach(audios, function (audio, callback) {
+                                results.push([{id: audio.attachments_id}]);
+                                console.log("results and audios \n", audios, "\n", results);
+                                callback();
+                              }, function (err) {
+                                vk.wallPost(user, null, post, results, function (err, postSaved) {
+                                  if (err) {
+                                    doAfterPost(err, user);
                                   } else {
-                                    doAfterPost(postSaved, user);
+                                    console.log('Ответ сервера на запрос добавления поста на стену', postSaved, "\n");
+                                    if (typeof postSaved.response != 'undefined') {
+                                      console.log("Отмечаем пост как отправленный", post);
+                                      post.posted = true;
+                                      post.save(function (err, post) {
+                                        doAfterPost();
+                                      });
+                                    } else {
+                                      doAfterPost(postSaved, user);
+                                    }
                                   }
-                                }
+                                });
                               });
                             });
-                          });
-                        } else {
-                          doAfterPost({error: 'empty posts list'});
+                          } else {
+                            doAfterPost({error: 'empty posts list'});
+                          }
                         }
                       }
-                    }
-                  );
+                    );
+                  }
                 });
               });
             }

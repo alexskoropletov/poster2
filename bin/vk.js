@@ -100,11 +100,15 @@ uploadFile = function(type, image, upload_url, callback) {
               callback(null);
             });
           }).on("fail", function(data, response) {
-            console.log(data);
-            console.log(response);
-          }).on("complete", function(data) {
+            console.log(response.statusCode, data);
+            callback('');
+          }).on("complete", function(data, response) {
             fs.unlink(new_file_name, function() {
-              callback(data);
+              if (response.statusCode == 200) {
+                callback(data);
+              } else {
+                callback('');
+              }
             });
           });
       });

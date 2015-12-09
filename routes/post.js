@@ -243,6 +243,12 @@ router.get('/schedule', function (req, res) {
   });
 });
 
+router.get('/corovan', function (req, res) {
+  tumblr.parseUserBlog(req.session.user, function() {
+    res.redirect("/post/page1");
+  });
+});
+
 router.post('/get_audio', function(req, res) {
   vk.searchAudio(req.session.user, req.body.q, function(err, result) {
     res.render('post/audio/search', {result: result});
