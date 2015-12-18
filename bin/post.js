@@ -1,17 +1,17 @@
 var mongoose = require('mongoose'),
-    Source = mongoose.model('Source'),
-    Group = mongoose.model('Group'),
-    User = mongoose.model('User'),
-    Post = mongoose.model('Post'),
-    PostImage = mongoose.model('PostImage'),
-    PostAudio = mongoose.model('PostAudio'),
-    vk = require('../bin/vk'),
-    config = require('../bin/config'),
-    moment = require('moment'),
-    tz = require('moment-timezone'),
-    async = require('async');
+  Source = mongoose.model('Source'),
+  Group = mongoose.model('Group'),
+  User = mongoose.model('User'),
+  Post = mongoose.model('Post'),
+  PostImage = mongoose.model('PostImage'),
+  PostAudio = mongoose.model('PostAudio'),
+  vk = require('../bin/vk'),
+  config = require('../bin/config'),
+  moment = require('moment'),
+  tz = require('moment-timezone'),
+  async = require('async');
 
-exports.compressTime = function(user, compressCallback) {
+exports.compressTime = function (user, compressCallback) {
   Post.findOne(
     {
       user: user._id,
@@ -20,9 +20,9 @@ exports.compressTime = function(user, compressCallback) {
     }
   )
     .sort({when: 1})
-    .exec(function(err, post) {
+    .exec(function (err, post) {
       post.when = Date.now() + config.get("post.first");
-      post.save(function(err, post) {
+      post.save(function (err, post) {
         var new_time = Date.now() + config.get("post.next");
         Post.update(
           {
@@ -34,14 +34,14 @@ exports.compressTime = function(user, compressCallback) {
           },
           {$set: {when: new Date(new_time)}},
           {multi: true}
-        ).exec(function(err, posts) {
+        ).exec(function (err, posts) {
             compressCallback();
           });
       });
     });
 };
 
-exports.fix = function(user, callback) {
+exports.fix = function (user, callback) {
   Post.update(
     {
       user: user._id,
@@ -50,15 +50,15 @@ exports.fix = function(user, callback) {
     },
     {$set: {failed: false, when: new Date(Date.now() + 60 * 60 * 5 * 1000)}},
     {multi: true}
-  ).exec(function(err, posts) {
+  ).exec(function (err, posts) {
       callback();
     });
 };
 
-exports.schedule = function(user, scheduled) {
+exports.schedule = function (user, scheduled) {
   Group.find({user: user._id}, function (err, groups) {
     groups.push({});
-    async.forEach(groups, function(group, groupsCallback) {
+    async.forEach(groups, function (group, groupsCallback) {
       Post.find(
         {
           user: user._id,
@@ -70,31 +70,35 @@ exports.schedule = function(user, scheduled) {
         })
         .sort({created_at: 1})
         .exec(
-          function(err, posts) {
-            var postTimeCalls = [];
-            async.forEach(posts, function(post, callback) {
-              postTimeCalls.push(function(postSaved) {
-                Post.findOne({user: user._id, posted: false, group: group._id}).sort({"when": -1}).exec(function(err, latest_post) {
-                  config.getNextPostTime(user, group, latest_post, function(nextWhen) {
-                    post.when = nextWhen;
-                    post.save(function(err, post) {
-                      postSaved();
-                    });
+        function (err, posts) {
+          var postTimeCalls = [];
+          async.forEach(posts, function (post, callback) {
+            postTimeCalls.push(function (postSaved) {
+              Post.findOne({
+                user: user._id,
+                posted: false,
+                group: group._id
+              }).sort({"when": -1}).exec(function (err, latest_post) {
+                config.getNextPostTime(user, group, latest_post, function (nextWhen) {
+                  post.when = nextWhen;
+                  post.save(function (err, post) {
+                    postSaved();
                   });
                 });
               });
-              callback();
-            }, function(err) {
-              async.series(
-                postTimeCalls,
-                function(err, result) {
-                  groupsCallback();
-                }
-              );
             });
-          }
-        );
-    }, function(err) {
+            callback();
+          }, function (err) {
+            async.series(
+              postTimeCalls,
+              function (err, result) {
+                groupsCallback();
+              }
+            );
+          });
+        }
+      );
+    }, function (err) {
       scheduled();
     });
   });
@@ -110,43 +114,43 @@ function addPostTime(date, user, end) {
       }
     }
   ).sort({"when": 1}).exec(function (err, startpost) {
-    if (startpost) {
-      Post.find(
-        {
-          user: user._id,
-          posted: false,
-          when: {
-            "$gt": new Date(startpost.when.getTime()),
-            "$lte": new Date(startpost.when.getTime() + config.get("post.distance"))
+      if (startpost) {
+        Post.find(
+          {
+            user: user._id,
+            posted: false,
+            when: {
+              "$gt": new Date(startpost.when.getTime()),
+              "$lte": new Date(startpost.when.getTime() + config.get("post.distance"))
+            }
           }
-        }
-      ).sort({"when": 1}).exec(function(err, posts) {
-          async.forEach(posts, function(post, callback) {
-            Group.findOne({_id: post.group}, function(err, group) {
-              config.getNextPostTime(user, group, post, function(nextWhen) {
-                post.when = nextWhen;
-                post.save(function(err, post) {
-                  callback();
+        ).sort({"when": 1}).exec(function (err, posts) {
+            async.forEach(posts, function (post, callback) {
+              Group.findOne({_id: post.group}, function (err, group) {
+                config.getNextPostTime(user, group, post, function (nextWhen) {
+                  post.when = nextWhen;
+                  post.save(function (err, post) {
+                    callback();
+                  });
                 });
               });
+            }, function (err) {
+              addPostTime(startpost.when.getTime() + config.get("post.distance"), user, end);
             });
-          }, function(err) {
-            addPostTime(startpost.when.getTime() + config.get("post.distance"), user, end);
           });
-        });
-    } else {
-      end();
-    }
-  });
+      } else {
+        end();
+      }
+    });
 }
 
 exports.addPostTime = addPostTime;
 
-fillPostsWithData = function(req, posts, callback) {
-  Group.find({user: req.session.user._id}, '_id name', function(err, groups) {
+fillPostsWithData = function (req, posts, callback) {
+  Group.find({user: req.session.user._id}, '_id name', function (err, groups) {
     async.forEachOf(posts, function (post, index, callback) {
       if (post) {
-        async.forEach(groups, function(group, callback) {
+        async.forEach(groups, function (group, callback) {
           if (JSON.stringify(group._id) == JSON.stringify(post.group)) {
             posts[index].group_name = group.name;
           }
@@ -163,13 +167,13 @@ fillPostsWithData = function(req, posts, callback) {
       } else {
         callback();
       }
-    }, function(err) {
+    }, function (err) {
       callback(posts, groups);
     });
   });
 };
 
-exports.getList = function(req, showList) {
+exports.getList = function (req, showList) {
   var pagination_tail = [];
   if (req.query.from_date) {
     pagination_tail.push("from_date=" + req.query.from_date);
@@ -196,9 +200,9 @@ exports.getList = function(req, showList) {
     filter.failed = req.query.failed == 'true';
     pagination_tail.push("failed=" + req.query.failed);
   }
-  Post.count(filter, function(err, count) {
+  Post.count(filter, function (err, count) {
     var per_page = 50;
-    var skip = (req.params.page- 1) * per_page > count ? 0 : (req.params.page - 1) * per_page;
+    var skip = (req.params.page - 1) * per_page > count ? 0 : (req.params.page - 1) * per_page;
     var pages = {};
     for (var x = 1; x <= Math.ceil(count / per_page); x++) {
       pages[x] = "/post/page" + x;
@@ -207,7 +211,7 @@ exports.getList = function(req, showList) {
       }
     }
     Post.find(filter).sort({"when": 1}).limit(per_page).skip(skip).exec(function (err, posts) {
-      fillPostsWithData(req, posts, function(posts, groups) {
+      fillPostsWithData(req, posts, function (posts, groups) {
         showList(
           {
             subtitle: 'Очередь постов',
@@ -223,7 +227,7 @@ exports.getList = function(req, showList) {
   });
 };
 
-exports.getLastPagePost = function(req, callback) {
+exports.getLastPagePost = function (req, callback) {
   var filter = {
     when: {
       "$gt": req.body.from_date ? moment(req.body.from_date).tz('Europe/Moscow') : moment().tz('Europe/Moscow')
@@ -242,17 +246,17 @@ exports.getLastPagePost = function(req, callback) {
   if (req.body.failed) {
     filter.failed = req.body.failed == 'true';
   }
-  Post.count(filter, function(err, count) {
+  Post.count(filter, function (err, count) {
     var skip = (req.body.page - 1) * 50 + 49;
     Post.findOne(filter).sort({"when": 1}).skip(skip).exec(function (err, post) {
-      fillPostsWithData(req, [post], function(posts, groups) {
+      fillPostsWithData(req, [post], function (posts, groups) {
         callback(posts[0]);
       });
     });
   });
 };
 
-exports.catchUp = function(user, callback) {
+exports.catchUp = function (user, callback) {
   Post.update(
     {
       user: user._id,
@@ -261,28 +265,28 @@ exports.catchUp = function(user, callback) {
     },
     {$set: {failed: true}},
     {multi: true}
-  ).exec(function(err, posts) {
+  ).exec(function (err, posts) {
       callback();
     });
 };
 
-exports.destroy = function(post_id, callback) {
+exports.destroy = function (post_id, callback) {
   Post.findById(post_id, function (err, schedule_post) {
     if (schedule_post) {
-      PostImage.find({post: schedule_post._id}, function(err, images) {
-        async.forEach(images, function (image, callback){
+      PostImage.find({post: schedule_post._id}, function (err, images) {
+        async.forEach(images, function (image, callback) {
           image.remove(function (err, image) {
             if (err) {
               console.log("Ошибка удаления изображения ", image, err);
             }
             callback();
           });
-        }, function(err) {
+        }, function (err) {
           if (err) {
             console.log("Ошибка удаления изображений ", images, err);
             callback();
           }
-          schedule_post.remove(function(err, schedule_post) {
+          schedule_post.remove(function (err, schedule_post) {
             callback();
           });
         });
@@ -293,26 +297,29 @@ exports.destroy = function(post_id, callback) {
   });
 };
 
-exports.moveFailedPost = function(filter, callback) {
-  Post.findOne(filter, function(err, post) {
-    if (post) {
-      post.when = post.when.getTime() + config.get('vk.post_penalty'); // добавляем провальному посту 2 минуты, чтобы он был отправлен позже
-      post.save(function(err) {
-        callback();
-      });
-    } else {
+moveFailedPost = function (post, callback) {
+  if (post) {
+    // добавляем посту 1 минуты, чтобы он был отправлен позже
+    // в случае ошибки
+    post.when = post.when.getTime() + config.get('vk.post_penalty');
+    post.save(function (err) {
       callback();
-    }
-  });
+    });
+  } else {
+    callback();
+  }
 };
+exports.moveFailedPost = moveFailedPost;
 
-exports.doPost = function(filter, doAfterPost) {
+exports.doPost = function (filter, doAfterPost) {
   Post.findOne(
     filter,
-    function(err, post) {
+    function (err, post) {
       if (post) {
         if (!post.group) {
-          postToUserPage(post, doAfterPost);
+          moveFailedPost(post, function () {
+            postToUserPage(post, doAfterPost);
+          });
         } else {
           postToGroupPage(post, doAfterPost);
         }
@@ -324,28 +331,28 @@ exports.doPost = function(filter, doAfterPost) {
 };
 
 function postToUserPage(post, doAfterPost) {
-  User.findOne({_id: post.user, is_active: true}, function(err, user) {
+  User.findOne({_id: post.user, is_active: true}, function (err, user) {
     if (user) {
-      vk.getImageUploadUrl(user, function(err, image_upload_url) {
+      vk.getImageUploadUrl(user, function (err, image_upload_url) {
         if (err) {
           doAfterPost(err, user);
         } else {
           console.log("Image upload url", image_upload_url, "\n");
-          vk.getDocUploadUrl(user, function(err, doc_upload_url) {
+          vk.getDocUploadUrl(user, function (err, doc_upload_url) {
             if (err) {
               console.log(err);
               doAfterPost(err, user)
             } else {
               console.log("File upload url", doc_upload_url, "\n");
-              PostImage.find({post: post._id}, function(err, images) {
+              PostImage.find({post: post._id}, function (err, images) {
                 var saveImage = [];
-                async.forEach(images, function(image, callback) {
+                async.forEach(images, function (image, callback) {
                   //добавляем функцию сохранения изображения
-                  saveImage.push(function(saveImageCallback) {
-                    setTimeout(function() {
+                  saveImage.push(function (saveImageCallback) {
+                    setTimeout(function () {
                       console.log('Тип документа', image.type, image);
                       if (image.type == 'document') {
-                        vk.uploadDoc(image, doc_upload_url, function(vk_res) {
+                        vk.uploadDoc(image, doc_upload_url, function (vk_res) {
                           console.log("vk.uploadDoc function response ", vk_res);
                           if (!vk_res) {
                             saveImageCallback({error: "vk.uploadImage empty response"});
@@ -364,12 +371,12 @@ function postToUserPage(post, doAfterPost) {
                           }
                         });
                       } else {
-                        vk.uploadImage(image, image_upload_url, function(vk_res) {
+                        vk.uploadImage(image, image_upload_url, function (vk_res) {
                           console.log("vk.uploadImage function response ", vk_res);
                           if (!vk_res) {
                             saveImageCallback({error: "vk.uploadImage empty response"});
                           } else {
-                            vk.saveUserImage(user, JSON.parse(vk_res), function(response) {
+                            vk.saveUserImage(user, JSON.parse(vk_res), function (response) {
                               console.log("vk.saveImage function response ", response);
                               if (response.error) {
                                 saveImageCallback(response.error);
@@ -384,7 +391,7 @@ function postToUserPage(post, doAfterPost) {
                     }, 1000);
                   });
                   callback();
-                }, function(err) {
+                }, function (err) {
                   if (err) {
                     console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
                     doAfterPost(err);
@@ -442,33 +449,33 @@ function postToUserPage(post, doAfterPost) {
 }
 
 function postToGroupPage(post, doAfterPost) {
-  User.findOne({_id: post.user, is_active: true}, function(err, user) {
+  User.findOne({_id: post.user, is_active: true}, function (err, user) {
     if (user) {
-      Group.findOne({user: user._id, _id: post.group}, function(err, group) {
+      Group.findOne({user: user._id, _id: post.group}, function (err, group) {
         if (group) {
-          vk.getGroupImageUploadUrl(user, group.vk_id, function(err, image_upload_url) {
+          vk.getGroupImageUploadUrl(user, group.vk_id, function (err, image_upload_url) {
             if (err) {
               console.log(err);
               doAfterPost(err, user, group);
             } else {
               console.log("Image upload url", image_upload_url, "\n");
-              vk.getGroupDocUploadUrl(user, group.vk_id, function(err, doc_upload_url) {
+              vk.getGroupDocUploadUrl(user, group.vk_id, function (err, doc_upload_url) {
                 if (err) {
                   console.log(err);
                   doAfterPost(err)
                 } else {
                   console.log("File upload url", doc_upload_url, "\n");
-                  PostImage.find({post: post._id}, function(err, images) {
+                  PostImage.find({post: post._id}, function (err, images) {
                     var saveImage = [];
-                    async.forEach(images, function(image, callback) {
+                    async.forEach(images, function (image, callback) {
                       //добавляем функцию сохранения изображения
-                      saveImage.push(function(saveImageCallback) {
-                        setTimeout(function() {
+                      saveImage.push(function (saveImageCallback) {
+                        setTimeout(function () {
                           console.log('Тип документа', image.type, image);
                           if (image.type == 'document') {
-                            vk.uploadDoc(image, doc_upload_url, function(vk_res) {
+                            vk.uploadDoc(image, doc_upload_url, function (vk_res) {
                               console.log("vk.uploadDoc function response ", vk_res);
-                              vk.saveDoc(user, vk_res, function(response) {
+                              vk.saveDoc(user, vk_res, function (response) {
                                 console.log("vk.saveDoc function response ", response);
                                 if (response.error) {
                                   saveImageCallback(response.error);
@@ -480,9 +487,9 @@ function postToGroupPage(post, doAfterPost) {
                               });
                             });
                           } else {
-                            vk.uploadImage(image, image_upload_url, function(vk_res) {
+                            vk.uploadImage(image, image_upload_url, function (vk_res) {
                               console.log("vk.uploadImage function response ", vk_res);
-                              vk.saveGroupImage(user, group.vk_id, JSON.parse(vk_res), function(response) {
+                              vk.saveGroupImage(user, group.vk_id, JSON.parse(vk_res), function (response) {
                                 console.log("vk.saveImage function response ", response);
                                 if (response.error) {
                                   saveImageCallback(response.error);
@@ -496,17 +503,17 @@ function postToGroupPage(post, doAfterPost) {
                         }, 1000);
                       });
                       callback();
-                    }, function(err) {
+                    }, function (err) {
                       async.series(
                         saveImage,
-                        function(err, results) {
+                        function (err, results) {
                           if (err) {
                             console.log('В процессе сохранения изображений произошла ошибка', err, "\n");
                             doAfterPost(err);
                           } else {
                             console.log('Будут сохранены следущюие данные', results, "\n");
                             if (results) {
-                              vk.wallPost(user, group.vk_id, post, results, function(err, postSaved) {
+                              vk.wallPost(user, group.vk_id, post, results, function (err, postSaved) {
                                 if (err) {
                                   doAfterPost(err);
                                 } else {
@@ -514,7 +521,7 @@ function postToGroupPage(post, doAfterPost) {
                                   if (typeof postSaved.response != 'undefined') {
                                     console.log("Отмечаем пост как отправленный", post);
                                     post.posted = true;
-                                    post.save(function(err, post) {
+                                    post.save(function (err, post) {
                                       if (err) {
                                         doAfterPost({
                                           err: err,
@@ -551,19 +558,19 @@ function postToGroupPage(post, doAfterPost) {
   });
 }
 
-exports.savePost = function(req, callback) {
+exports.savePost = function (req, callback) {
   new Post({
     user: req.session.user._id,
     when: Date.parse(req.body.when),
     group: req.body.group || null,
     description: req.body.description
-  }).save(function(err, post, count) {
+  }).save(function (err, post, count) {
       callback(err, post);
     });
 };
 
-exports.savePostImages = function(post, req, callback) {
-  PostImage.find({post: post._id}).remove(function() {
+exports.savePostImages = function (post, req, callback) {
+  PostImage.find({post: post._id}).remove(function () {
     if (req.body['imageUrl[]'] && req.body['imageUrl[]'].length) {
       if (req.body['imageUrl[]'].constructor !== Array) {
         req.body['imageUrl[]'] = [req.body['imageUrl[]']];
@@ -574,7 +581,7 @@ exports.savePostImages = function(post, req, callback) {
       if (req.body['imageType[]'].constructor !== Array) {
         req.body['imageType[]'] = [req.body['imageType[]']];
       }
-      async.forEachOf(req.body['imageUrl[]'], function (val, key, callback){
+      async.forEachOf(req.body['imageUrl[]'], function (val, key, callback) {
         if (val) {
           new PostImage({
             image_url: val,
@@ -587,7 +594,7 @@ exports.savePostImages = function(post, req, callback) {
         } else {
           callback();
         }
-      }, function(err) {
+      }, function (err) {
         callback();
       });
     } else {
@@ -596,14 +603,14 @@ exports.savePostImages = function(post, req, callback) {
   });
 };
 
-exports.savePostAudio = function(post, req, callback) {
-  PostAudio.find({post: post._id}).remove(function() {
+exports.savePostAudio = function (post, req, callback) {
+  PostAudio.find({post: post._id}).remove(function () {
     if (req.body['audio_name[]'] && req.body['audio_name[]'].length) {
       if (req.body['audio_name[]'].constructor !== Array) {
         req.body['audio_name[]'] = [req.body['audio_name[]']];
         req.body['audio_id[]'] = [req.body['audio_id[]']];
       }
-      async.forEachOf(req.body['audio_name[]'], function (val, key, async_callback){
+      async.forEachOf(req.body['audio_name[]'], function (val, key, async_callback) {
         new PostAudio({
           attachments_name: val,
           attachments_id: req.body['audio_id[]'][key],
@@ -611,7 +618,7 @@ exports.savePostAudio = function(post, req, callback) {
         }).save(function () {
             async_callback();
           });
-      }, function(err) {
+      }, function (err) {
         callback();
       });
     } else {
