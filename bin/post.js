@@ -316,13 +316,13 @@ exports.doPost = function (filter, doAfterPost) {
     filter,
     function (err, post) {
       if (post) {
-        if (!post.group) {
-          moveFailedPost(post, function () {
+        moveFailedPost(post, function () {
+          if (!post.group) {
             postToUserPage(post, doAfterPost);
-          });
-        } else {
-          postToGroupPage(post, doAfterPost);
-        }
+          } else {
+            postToGroupPage(post, doAfterPost);
+          }
+        });
       } else {
         doAfterPost({error: 'Post not found', filter: filter});
       }

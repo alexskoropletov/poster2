@@ -40,34 +40,7 @@ $(function () {
     sideBySide: true,
     date: $("#filter_from_date").val()
   });
-  $(".delete_link").on("click", function () {
-    var id = "#postid" + $(this).data('post');
-    var sendData = {
-      post_id: $(this).data('post'),
-      page: $(this).data('page'),
-      from_date: $("#filter_from_date").val(),
-      group: $("#filter_group").val(),
-      approved: $("#filter_approved").val(),
-      posted: $("#filter_posted").val(),
-      failed: $("#filter_failed").val()
-    };
-    $.post("/post/destroy", sendData, function (data) {
-      //if (data.res == 'ok') {
-      if (data) {
-        $(id).replaceWith("");
-        $("#post_list").append(data);
-      } else {
-        alert("При удалении поста возникла ошибка");
-      }
-    });
-    return false;
-  });
-  $(".post_approved").click(function () {
-    var self = this;
-    $.post("/post/approve", {id: $(this).data('id')}, function (data) {
-      $(self).html(data);
-    });
-  });
+  addPostListListeners();
   //users
   $(".user_active").click(function () {
     var self = this;
@@ -76,14 +49,16 @@ $(function () {
     });
   });
   $(".user_delete").click(function () {
-    var id = "#user" + $(this).data('id');
-    $.post("/users/destroy", {id: $(this).data('id')}, function (data) {
-      if (data.res == 'ok') {
-        $(id).replaceWith("");
-      } else {
-        alert("При удалении пользователя возникла ошибка");
-      }
-    }, 'json');
+    if (confirm("Удалить пользователя?")) {
+      var id = "#user" + $(this).data('id');
+      $.post("/users/destroy", {id: $(this).data('id')}, function (data) {
+        if (data.res == 'ok') {
+          $(id).replaceWith("");
+        } else {
+          alert("При удалении пользователя возникла ошибка");
+        }
+      }, 'json');
+    }
     return false;
   });
   addListeners();
@@ -107,5 +82,38 @@ function addListeners() {
         addListeners();
       });
     }
+  });
+}
+
+function addPostListListeners() {
+  $(".delete_link").off("click").on("click", function () {
+    var id = "#postid" + $(this).data('post');
+    var sendData = {
+      post_id: $(this).data('post'),
+      page: $(this).data('page'),
+      from_date: $("#filter_from_date").val(),
+      group: $("#filter_group").val(),
+      approved: $("#filter_approved").val(),
+      posted: $("#filter_posted").val(),
+      failed: $("#filter_failed").val()
+    };
+    $.post("/post/destroy", sendData, function (data) {
+      //if (data.res == 'ok') {
+      if (data) {
+        $(id).replaceWith("");
+        $("#post_list").append(data);
+        addPostListListeners();
+      } else {
+        alert("При удалении поста возникла ошибка");
+      }
+    });
+    return false;
+  });
+  $(".post_approved").off("click").on("click", function () {
+    console.log('approved clicked');
+    var self = this;
+    $.post("/post/approve", {id: $(this).data('id')}, function (data) {
+      $(self).html(data);
+    });
   });
 }
