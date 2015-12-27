@@ -57,9 +57,7 @@ router.get('/do_post/:post_id', function (req, res) {
           renderData
         );
       } else {
-        poster2.moveFailedPost(filter, function() {
-          res.redirect('/post/page1');
-        });
+        res.redirect('/post/page1');
       }
     } else {
       res.redirect('/post/page1');
@@ -164,8 +162,9 @@ router.get('/destroy/:id/:current_page', function (req, res) {
 router.post('/destroy', function (req, res) {
   poster2.destroy(req.body.post_id, function() {
     poster2.getLastPagePost(req, function(post) {
+      console.log(req.body.page);
       if (post) {
-        res.render('post/list_item', {post: post});
+        res.render('post/list_item', {post: post, current_page: req.body.page});
       } else {
         res.json({res:'ok'});
       }

@@ -69,7 +69,8 @@ parseUserBlog = function (user, callback) {
                             when: nextWhen,
                             user: user._id,
                             group: source.group || null,
-                            approved: source.approved
+                            approved: source.approved,
+                            original_post: post.post_url
                           }).save(function (err, newpost, count) {
                               if (err) {
                                 console.log("Ошибка newpost", err);

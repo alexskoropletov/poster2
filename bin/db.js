@@ -45,6 +45,8 @@ var SourcePost = new Schema({
   source: {type: ObjectId, ref: 'Source'}
 });
 
+//source.url - выбрать из source where sourcepost.source = source.id where sourcepost.image = postimage.image_url where postimage.post = post.id
+
 var Post = new Schema({
   when: {type: Date, default: Date.now},
   description: String,
@@ -53,6 +55,7 @@ var Post = new Schema({
   approved: {type: Boolean, default: false},
   posted: {type: Boolean, default: false},
   failed: {type: Boolean, default: false},
+  original_post: {type: String, default: null},
   created_at: {type: Date, default: Date.now}
 });
 var PostImage = new Schema({

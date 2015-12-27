@@ -16,7 +16,13 @@ tr(id="postid" + post._id)
   td
     if post.failed
       Не отправлен
-  td= post.description
+  td
+    = post.description
+    if post.original_post
+      br
+      i Исходный пост:
+        a(href=post.original_post, target="_blank")
+          = post.original_post
   td
     each image in post.images
       a(href=image.image_url, target='_blank')
