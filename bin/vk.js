@@ -83,7 +83,7 @@ exports.getGroupDocUploadUrl = function(user, group_id, callback) {
 
 uploadFile = function(type, image, upload_url, callback) {
   if (image.image_url) {
-    var new_file_name = "log/" + image._id + (image.image_url.indexOf(".gif") > -1 ? ".gif" : ".jpg");
+    var new_file_name = "log/" + image._id + (image.image_url.indexOf(".gif") > -1 || type == 'doc' ? ".gif" : ".jpg");
     var r = request(image.image_url).pipe(fs.createWriteStream(new_file_name));
     r.on('finish', function () {
       fs.stat(new_file_name, function(err, stats) {

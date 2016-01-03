@@ -21,8 +21,9 @@ tr(id="postid" + post._id)
     if post.original_post
       br
       i Исходный пост:
+        br
         a(href=post.original_post, target="_blank")
-          = post.original_post
+          = post.original_post_short
   td
     each image in post.images
       a(href=image.image_url, target='_blank')
