@@ -150,8 +150,10 @@ fillPostsWithData = function (req, posts, callback) {
   Group.find({user: req.session.user._id}, '_id name', function (err, groups) {
     async.forEachOf(posts, function (post, index, callback) {
       if (post) {
-        posts[index].original_post_short = post.original_post.split("http://").join("").split(".");
-        posts[index].original_post_short = posts[index].original_post_short[0];
+        if (post.original_post) {
+          posts[index].original_post_short = post.original_post.split("http://").join("").split(".");
+          posts[index].original_post_short = posts[index].original_post_short[0];
+        }
         async.forEach(groups, function (group, callback) {
           if (JSON.stringify(group._id) == JSON.stringify(post.group)) {
             posts[index].group_name = group.name;
