@@ -6,14 +6,14 @@ if images
         div.col-sm-5
           img.max250(src=val.image_preview_url)
           input.form-control(
-            type="hidden"
-            name="imageUrl[]"
-            value=val.image_url
+          type="hidden"
+          name="imageUrl[]"
+          value=val.image_url
           )
           input.form-control(
-            type="hidden"
-            name="imagePreview[]"
-            value=val.image_preview_url
+          type="hidden"
+          name="imagePreview[]"
+          value=val.image_preview_url
           )
         div.col-sm-4
           select.form-control(
@@ -53,6 +53,26 @@ div.form-group
     ) +
 div.form-group
   label.col-sm-1.control-label(
+  for="inputApproved"
+  ) Пост одобрен
+  div.col-sm-10
+    if post.approved
+      input(
+      type="checkbox"
+      name="approved"
+      value="1"
+      id="inputApproved"
+      checked="checked"
+      )
+    else
+      input(
+      type="checkbox"
+      name="approved"
+      value="1"
+      id="inputApproved"
+      )
+div.form-group
+  label.col-sm-1.control-label(
   for="inputWhen"
   ) Дата
   div.col-sm-1
@@ -62,10 +82,10 @@ div.form-group
           div.form-group
             div.input-group.date(id='datetimepicker2')
               input.form-control(
-                type='text'
-                name="when"
-                id="inputWhen"
-                data-date=post.when.getTime()
+              type='text'
+              name="when"
+              id="inputWhen"
+              data-date=post.when.getTime()
               )
               span.input-group-addon
                 span.glyphicon.glyphicon-calendar
@@ -122,3 +142,14 @@ div.form-group
     button.btn.btn-default(
     type="submit"
     ) Сохранить
+    &nbsp;
+    &nbsp;
+    &nbsp;
+    button.to-list.btn.btn-default(
+    type="submit"
+    ) Сохранить и вернуться к списку
+input(
+type="hidden"
+name="submit_type"
+value=""
+)

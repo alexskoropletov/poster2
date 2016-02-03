@@ -4,4 +4,5 @@ block content
   method='post'
   action='/post/update/' + post._id
   )
+    input(type="hidden", name="current_page", value=current_page)
     include form

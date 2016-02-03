@@ -162,7 +162,6 @@ router.get('/destroy/:id/:current_page', function (req, res) {
 router.post('/destroy', function (req, res) {
   poster2.destroy(req.body.post_id, function() {
     poster2.getLastPagePost(req, function(post) {
-      console.log(req.body.page);
       if (post) {
         res.render('post/list_item', {post: post, current_page: req.body.page});
       } else {
@@ -173,7 +172,7 @@ router.post('/destroy', function (req, res) {
 });
 
 /* редактирование */
-router.get('/edit/:id', function (req, res) {
+router.get('/edit/:id/:current_page', function (req, res) {
   Post.findOne({_id: req.params.id, user: req.session.user._id}, function (err, post) {
     PostImage.find({post: post._id}, function(err, images) {
       PostAudio.find({post: post._id}, function(err, audios) {
@@ -185,7 +184,8 @@ router.get('/edit/:id', function (req, res) {
               post: post,
               groups: groups,
               images: images,
-              audios: audios
+              audios: audios,
+              current_page: req.params.current_page
             }
           );
         });
@@ -201,8 +201,13 @@ router.post('/update/:id', function (req, res) {
         post.when = Date.parse(req.body.when);
         post.group = req.body.group.length ? req.body.group : null;
         post.description = req.body.description;
+        post.approved = req.body.approved;
         post.save(function (err, post) {
-          res.redirect('/post/edit/' + req.params.id);
+          if (req.body.submit_type == 'list') {
+            res.redirect('/post/page' + req.body.current_page);
+          } else {
+            res.redirect('/post/edit/' + req.params.id + "/" + req.body.current_page);
+          }
         });
       });
     });

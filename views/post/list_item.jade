@@ -3,12 +3,6 @@ tr(id="postid" + post._id)
   td
     = post.group_name || "На стену"
   td
-    a.post_approved(href="javascript:void(0);", data-id="" + post._id)
-      if post.approved
-        include ../common/item_active
-      else
-        include ../common/item_inactive
-  td
     if post.posted
       Опубликован
     else
@@ -25,6 +19,12 @@ tr(id="postid" + post._id)
         a(href=post.original_post, target="_blank")
           = post.original_post_short
   td
+    a.post_approved(href="javascript:void(0);", data-id="" + post._id)
+      if post.approved
+        include ../common/item_active
+      else
+        include ../common/item_inactive
+  td
     each image in post.images
       a(href=image.image_url, target='_blank')
         img.max250(src=image.image_preview_url)
@@ -38,7 +38,7 @@ tr(id="postid" + post._id)
     a(href="/post/do_post/" + post._id)
       span.glyphicon.glyphicon-star-empty(aria-hidden="true")
   td
-    a(href="/post/edit/" + post._id)
+    a(href="/post/edit/" + post._id + "/" + current_page)
       span.glyphicon.glyphicon-pencil(aria-hidden="true")
   td
     a.delete_link(

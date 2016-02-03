@@ -13,6 +13,9 @@ $(function () {
   $(".remove-image").click(function () {
     $(this).parents(".images-container").replaceWith("");
   });
+  $(".to-list").click(function() {
+    $("input[name=submit_type]").val("list");
+  });
   //post form audio
   $(".audio-search").keyup(function () {
     if ($.trim($(this).val()).length >= 3) {
